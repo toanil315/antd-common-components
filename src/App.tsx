@@ -3,9 +3,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@emotion/react';
 import theme from './styles/theme';
 import { ConfigProvider } from 'antd';
-import { ProviderTree } from './components';
+import { DocumentEditor, ProviderTree } from './components';
 import { createProviderConfig } from './components/ProviderTree/ProviderTree';
 import { NotificationProvider } from './contexts';
+import { I18nextProvider } from 'react-i18next';
+import i18n from '@/i18n';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,6 +34,7 @@ const App = () => {
   // the first provider will be the outermost provider
   const providersAndConfigs = [
     createProviderConfig(QueryClientProvider, { client: queryClient }),
+    createProviderConfig(I18nextProvider, { i18n } as any),
     createProviderConfig(ThemeProvider, { theme } as any),
     createProviderConfig(ConfigProvider, {
       theme: antdTheme,
@@ -40,7 +43,11 @@ const App = () => {
     createProviderConfig(NotificationProvider),
   ];
 
-  return <ProviderTree providers={providersAndConfigs}>App</ProviderTree>;
+  return (
+    <ProviderTree providers={providersAndConfigs}>
+      <DocumentEditor />
+    </ProviderTree>
+  );
 };
 
 export default App;

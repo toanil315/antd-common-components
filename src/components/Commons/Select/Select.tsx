@@ -14,6 +14,7 @@ export interface SelectProps extends Omit<AntdSelectProps, 'onChange'> {
   onChange?: (value: string) => void;
   name: string;
   readOnly?: boolean;
+  selectSize?: 'small' | 'medium' | 'large';
 }
 
 const Select = ({
