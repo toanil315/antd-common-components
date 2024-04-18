@@ -27,10 +27,7 @@ const ListPlugin = ({ type }: { type: ListType }) => {
 
   return (
     <StyledButtonView
-      onClick={() => {
-        console.log('cli9ck');
-        editor.chain().focus()[config.methodName as 'toggleBulletList']?.().run();
-      }}
+      onClick={() => editor.chain().focus()[config.methodName as 'toggleBulletList']?.().run()}
       isActive={editor.isActive(`${type}List`)}
       className='pointer-events-none block w-full'
     >

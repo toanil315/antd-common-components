@@ -5,7 +5,11 @@ import { useModal } from '@/hooks';
 import { LinkIcon } from '@/components/Icons';
 import LinkModal from '../modals/LinkModal/LinkModal';
 
-const LinkPlugin = () => {
+interface Props {
+  label?: string;
+}
+
+const LinkPlugin = ({ label }: Props) => {
   const { editor } = useCurrentEditor();
 
   if (!editor) {
@@ -26,7 +30,7 @@ const LinkPlugin = () => {
         onClick={handleSetLink}
         isActive={editor.isActive('link')}
       >
-        <LinkIcon />
+        <LinkIcon /> {label}
       </StyledButtonView>
       <LinkModal modal={linkModal} />
     </>

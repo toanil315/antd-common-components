@@ -12,6 +12,11 @@ import { InsertDefaultTablePlugin } from './plugins/TablePlugins';
 import MediaPlugin from './plugins/MediaPlugin';
 import FontFamillyPlugin from './plugins/FontFamillyPlugin';
 import FontSizePlugin from './plugins/FontSizePlugin';
+import FileMenu from './top-menus/FileMenu';
+import EditMenu from './top-menus/EditMenu';
+import ViewMenu from './top-menus/ViewMenu';
+import InsertMenu from './top-menus/InsertMenu';
+import FormatMenu from './top-menus/FormatMenu';
 
 const MenuBar = () => {
   const { editor } = useCurrentEditor();
@@ -24,21 +29,11 @@ const MenuBar = () => {
     <>
       <StyledMenuBar>
         <div className='top'>
-          <OverflowMenu>
-            <StyledButtonView>File</StyledButtonView>
-          </OverflowMenu>
-          <OverflowMenu>
-            <StyledButtonView>Edit</StyledButtonView>
-          </OverflowMenu>
-          <OverflowMenu>
-            <StyledButtonView>View</StyledButtonView>
-          </OverflowMenu>
-          <OverflowMenu>
-            <StyledButtonView>Insert</StyledButtonView>
-          </OverflowMenu>
-          <OverflowMenu>
-            <StyledButtonView>Format</StyledButtonView>
-          </OverflowMenu>
+          <FileMenu />
+          <EditMenu />
+          <ViewMenu />
+          <InsertMenu />
+          <FormatMenu />
           <OverflowMenu>
             <StyledButtonView>Table</StyledButtonView>
           </OverflowMenu>
@@ -77,7 +72,6 @@ const MenuBar = () => {
           <MenuBarSeparator />
           <ImagePlugin />
           <InsertDefaultTablePlugin />
-          <MediaPlugin />
 
           <MenuBarSeparator />
           <OverflowMenu
@@ -105,6 +99,11 @@ const MenuBar = () => {
                   ),
                   key: listType,
                 })),
+
+                {
+                  label: <MediaPlugin label='Media' />,
+                  key: 'media',
+                },
               ],
               onClick: (e) => e.domEvent.currentTarget.querySelector('button')?.click(),
             }}

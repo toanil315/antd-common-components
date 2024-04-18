@@ -65,7 +65,7 @@ const LinkModal = ({ modal }: Props) => {
       footer={null}
     >
       <FormProvider {...form}>
-        <StyledLinkPropsForm>
+        <StyledLinkPropsForm onSubmit={form.handleSubmit(onSetLink)}>
           <Form.Input
             name='url'
             label='Url'
@@ -85,7 +85,7 @@ const LinkModal = ({ modal }: Props) => {
             >
               Cancel
             </Button>
-            <Button onClick={form.handleSubmit(onSetLink)}>Submit</Button>
+            <Button>Submit</Button>
           </div>
         </StyledLinkPropsForm>
       </FormProvider>

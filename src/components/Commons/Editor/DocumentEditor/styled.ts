@@ -7,8 +7,10 @@ export const StyledDocumentEditor = styled.div`
   margin: 0 auto;
 
   & > div {
-    width: 100%;
-    height: 100%;
+    &:first-of-type {
+      width: 100%;
+      height: 100%;
+    }
   }
 
   .ProseMirror {
@@ -126,7 +128,7 @@ export const StyledMenuBar = styled.nav`
   }
 `;
 
-export const StyledButtonView = styled.button<{ isActive?: boolean }>`
+export const StyledButtonView = styled.button<{ isActive?: boolean; disabled?: boolean }>`
   padding: 6px;
   background-color: transparent;
   border: none;
@@ -151,6 +153,16 @@ export const StyledButtonView = styled.button<{ isActive?: boolean }>`
     css`
       background: ${theme.colors.grey_4};
     `}
+
+  ${({ disabled, theme }) =>
+    disabled &&
+    css`
+      color: ${theme.colors.grey_4};
+      svg {
+        fill: ${theme.colors.grey_4};
+      }
+      pointer-events: none;
+    `}
 `;
 
 export const MenuBarSeparator = styled.span`
@@ -158,4 +170,19 @@ export const MenuBarSeparator = styled.span`
   height: 18px;
   border-right: 2px solid ${({ theme }) => theme.colors.grey_5};
   margin: 0 10px;
+`;
+
+export const StyledTableBubbleMenu = styled.div`
+  width: 400px;
+
+  background-color: ${({ theme }) => theme.colors.white};
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  padding: 6px;
+  border-radius: ${({ theme }) => theme.radii.large};
+
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
 `;

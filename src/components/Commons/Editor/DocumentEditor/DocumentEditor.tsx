@@ -13,11 +13,16 @@ import TableRow from '@tiptap/extension-table-row';
 import Youtube from '@tiptap/extension-youtube';
 import FontFamily from '@tiptap/extension-font-family';
 import FontSize from 'tiptap-extension-font-size';
+import Highlight from '@tiptap/extension-highlight';
+import Superscript from '@tiptap/extension-superscript';
+import Subscript from '@tiptap/extension-subscript';
 import { EditorProvider } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import React from 'react';
 import { StyledDocumentEditor } from './styled';
 import MenuBar from './MenuBar';
+import BubbleMenu from '@tiptap/extension-bubble-menu';
+import TableBubbleMenu from './bubble-menus/TableBubbleMenu';
 
 const extensions = [
   Color.configure({ types: [TextStyle.name, ListItem.name] }),
@@ -44,6 +49,15 @@ const extensions = [
   FontSize.configure({
     types: ['textStyle'],
   }),
+  Color.configure({
+    types: ['textStyle'],
+  }),
+  Highlight.configure({
+    multicolor: true,
+  }),
+  Superscript,
+  Subscript,
+  BubbleMenu,
   StarterKit.configure({
     bulletList: {
       keepMarks: true,
@@ -66,7 +80,7 @@ export default () => {
         extensions={extensions}
         content={content}
       >
-        {''}
+        <TableBubbleMenu />
       </EditorProvider>
     </StyledDocumentEditor>
   );

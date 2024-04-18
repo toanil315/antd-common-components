@@ -1,11 +1,23 @@
-import { BoldIcon, ItalicIcon, StrikeIcon, UnderlineIcon } from '@/components/Icons';
+import {
+  BoldIcon,
+  ItalicIcon,
+  StrikeIcon,
+  SuperscriptIcon,
+  UnderlineIcon,
+} from '@/components/Icons';
 import React, { useMemo } from 'react';
 import { StyledButtonView } from '../styled';
 import { useCurrentEditor } from '@tiptap/react';
 
-export type TextStyle = 'bold' | 'italic' | 'underline' | 'strike';
+export type TextStyle = 'bold' | 'italic' | 'underline' | 'strike' | 'superscript' | 'subscript';
 
-const TextStylePlugin = ({ style }: { style: TextStyle }) => {
+interface Props {
+  label?: string;
+  style: TextStyle;
+  className?: string;
+}
+
+const TextStylePlugin = ({ style, label, className }: Props) => {
   const { editor } = useCurrentEditor();
   if (!editor) return null;
 
@@ -27,6 +39,14 @@ const TextStylePlugin = ({ style }: { style: TextStyle }) => {
         methodName: 'toggleStrike',
         icon: <StrikeIcon />,
       },
+      superscript: {
+        methodName: 'toggleSuperscript',
+        icon: <SuperscriptIcon />,
+      },
+      subscript: {
+        methodName: 'toggleSubscript',
+        icon: <SuperscriptIcon />,
+      },
     }),
     [],
   );
@@ -35,11 +55,15 @@ const TextStylePlugin = ({ style }: { style: TextStyle }) => {
 
   return (
     <StyledButtonView
-      onClick={() => editor.chain().focus()[config.methodName as 'toggleBold']?.().run()}
+      onClick={(e) => {
+        e.stopPropagation();
+        editor.chain().focus()[config.methodName as 'toggleBold']?.().run();
+      }}
       disabled={!editor.can().chain().focus()[config.methodName as 'toggleBold']?.().run()}
       isActive={editor.isActive(style)}
+      className={className}
     >
-      {config.icon}
+      {config.icon} {label}
     </StyledButtonView>
   );
 };

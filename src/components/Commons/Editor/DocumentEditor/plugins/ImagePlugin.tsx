@@ -4,13 +4,17 @@ import { useModal } from '@/hooks';
 import ImageModal from '../modals/ImageModal/ImageModal';
 import { ImageIcon } from '@/components/Icons';
 
-const ImagePlugin = () => {
+interface Props {
+  label?: string;
+}
+
+const ImagePlugin = ({ label }: Props) => {
   const imageModal = useModal();
 
   return (
     <>
       <StyledButtonView onClick={imageModal.show}>
-        <ImageIcon />
+        <ImageIcon /> {label}
       </StyledButtonView>
       <ImageModal modal={imageModal} />
     </>

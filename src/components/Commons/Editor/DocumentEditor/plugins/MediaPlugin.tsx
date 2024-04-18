@@ -4,13 +4,17 @@ import { StyledButtonView } from '../styled';
 import { MediaIcon } from '@/components/Icons';
 import MediaModal from '../modals/MediaModal/MediaModal';
 
-const MediaPlugin = () => {
+interface Props {
+  label?: string;
+}
+
+const MediaPlugin = ({ label }: Props) => {
   const mediaModal = useModal();
 
   return (
     <>
       <StyledButtonView onClick={mediaModal.show}>
-        <MediaIcon />
+        <MediaIcon /> {label}
       </StyledButtonView>
       <MediaModal modal={mediaModal} />
     </>

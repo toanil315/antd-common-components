@@ -32,6 +32,13 @@ export const StyledPanel = styled.div`
       &:hover {
         background-color: ${({ theme }) => theme.colors.grey_4};
       }
+
+      &.ant-dropdown-menu-item-disabled {
+        color: ${({ theme }) => theme.colors.grey_7};
+        svg {
+          fill: ${({ theme }) => theme.colors.grey_7};
+        }
+      }
     }
   }
 `;

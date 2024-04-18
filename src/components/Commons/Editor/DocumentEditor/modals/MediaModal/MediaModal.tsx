@@ -59,6 +59,7 @@ const MediaModal = ({ modal }: Props) => {
       modal={modal}
       title='Insert Media'
       footer={null}
+      modalRender={(modal) => <div onClick={(e) => e.stopPropagation()}>{modal}</div>}
     >
       <FormProvider {...form}>
         <Row gutter={[12, 12]}>
