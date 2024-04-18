@@ -11,6 +11,9 @@ const TableBubbleMenu = () => {
     <BubbleMenu
       editor={editor}
       shouldShow={() => editor.isActive('table')}
+      tippyOptions={{
+        placement: 'bottom-end',
+      }}
     >
       <StyledTableBubbleMenu>
         {...[
