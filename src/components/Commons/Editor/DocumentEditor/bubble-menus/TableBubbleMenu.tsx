@@ -40,6 +40,7 @@ const TableBubbleMenu = () => {
             <TablePluginFactory
               key={tablePlugin}
               plugin={tablePlugin as TablePlugins}
+              inView={editor.isActive('table')}
             />
           ) : (
             <MenuBarSeparator key={`divider-${index}`} />

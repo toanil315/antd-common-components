@@ -63,6 +63,7 @@ const ImageModal = ({ modal }: Props) => {
       modal={modal}
       title='Insert Image'
       footer={null}
+      modalRender={(modal) => <div onClick={(e) => e.stopPropagation()}>{modal}</div>}
     >
       <FormProvider {...form}>
         <Tabs items={items} />

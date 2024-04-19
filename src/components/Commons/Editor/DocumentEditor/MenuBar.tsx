@@ -34,9 +34,6 @@ const MenuBar = () => {
           <ViewMenu />
           <InsertMenu />
           <FormatMenu />
-          <OverflowMenu>
-            <StyledButtonView>Table</StyledButtonView>
-          </OverflowMenu>
         </div>
 
         {/* HEADING PLUGINS */}

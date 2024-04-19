@@ -1,6 +1,6 @@
 import React, { ReactNode, useMemo } from 'react';
 import { StyledButtonView } from '../styled';
-import { useCurrentEditor } from '@tiptap/react';
+import { Editor, useCurrentEditor } from '@tiptap/react';
 import {
   DeleteColumnIcon,
   DeleteRowIcon,
@@ -16,6 +16,10 @@ import {
   ToggleHeaderIcon,
 } from '@/components/Icons';
 import { Tooltip } from 'antd';
+import { Popover } from '@/components/Commons/Popover';
+import SelectTableSizePopup, {
+  CellPosition,
+} from '../popups/SelectTableSizePopup/SelectTableSizePopup';
 
 export type TablePlugins =
   | 'addColumnBefore'
@@ -33,12 +37,7 @@ export type TablePlugins =
 
 interface TablePluginFactoryProps {
   plugin: TablePlugins;
-}
-
-interface InsertTablePluginProps {
-  rows?: number;
-  cols?: number;
-  withHeaderRow?: boolean;
+  inView?: boolean;
 }
 
 const PluginWrapper = ({ children }: { children: (args: { editor: any }) => ReactNode }) => {
@@ -50,7 +49,7 @@ const PluginWrapper = ({ children }: { children: (args: { editor: any }) => Reac
   return children({ editor });
 };
 
-export const TablePluginFactory = ({ plugin }: TablePluginFactoryProps) => {
+export const TablePluginFactory = ({ plugin, inView }: TablePluginFactoryProps) => {
   const tableConfigs = useMemo(() => {
     return {
       addColumnBefore: {
@@ -128,6 +127,7 @@ export const TablePluginFactory = ({ plugin }: TablePluginFactoryProps) => {
         <Tooltip
           title={config.tooltip}
           zIndex={9999}
+          {...(!inView ? { open: false } : {})}
         >
           <StyledButtonView
             onClick={() => editor.chain().focus()[config.methodName]?.().run()}
@@ -141,25 +141,30 @@ export const TablePluginFactory = ({ plugin }: TablePluginFactoryProps) => {
   );
 };
 
-export const InsertDefaultTablePlugin = ({
-  rows = 3,
-  cols = 3,
-  withHeaderRow,
-}: InsertTablePluginProps) => {
+export const InsertDefaultTablePlugin = () => {
+  const [sizePopupOpen, setSizePopupOpen] = React.useState(false);
+
+  const handleCellClick =
+    (editor: Editor) =>
+    ({ x, y }: CellPosition) => {
+      editor.chain().focus().insertTable({ rows: x, cols: y, withHeaderRow: true }).run();
+      setSizePopupOpen(false);
+    };
+
   return (
     <PluginWrapper>
       {({ editor }) => (
-        <StyledButtonView
-          onClick={() =>
-            editor
-              .chain()
-              .focus()
-              .insertTable({ rows, cols, withHeaderRow: Boolean(withHeaderRow) })
-              .run()
-          }
+        <Popover
+          open={sizePopupOpen}
+          onOpenChange={setSizePopupOpen}
+          destroyTooltipOnHide
+          trigger={'click'}
+          content={<SelectTableSizePopup onCellClick={handleCellClick(editor)} />}
         >
-          <TableIcon />
-        </StyledButtonView>
+          <StyledButtonView>
+            <TableIcon />
+          </StyledButtonView>
+        </Popover>
       )}
     </PluginWrapper>
   );
