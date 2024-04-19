@@ -2,8 +2,8 @@ import { css } from '@emotion/react';
 import styled from '@emotion/styled';
 
 export const StyledDocumentEditor = styled.div`
-  height: calc(100vh - 120px);
   width: 800px;
+  height: calc(100vh - 120px);
   margin: 0 auto;
 
   & > div {
@@ -16,6 +16,8 @@ export const StyledDocumentEditor = styled.div`
   .ProseMirror {
     width: 100%;
     height: 100%;
+    overflow: auto;
+
     padding: 20px;
     border: 1px solid #e2e8f0;
     border-radius: 4px;
