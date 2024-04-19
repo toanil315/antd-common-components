@@ -33,6 +33,19 @@ export const StyledDocumentEditor = styled.div`
       margin-top: 0.75em;
     }
 
+    p {
+      span > * {
+        font-family: inherit;
+      }
+
+      a {
+        color: ${({ theme }) => theme.colors.primary_6} !important;
+        & * {
+          color: ${({ theme }) => theme.colors.primary_6} !important;
+        }
+      }
+    }
+
     img {
       max-width: 100%;
       height: auto;

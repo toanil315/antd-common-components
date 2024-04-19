@@ -25,7 +25,7 @@ const SelectTableSizePopup = ({ onCellClick }: Props) => {
             .fill(0)
             .map((_, colIndex) => (
               <StyledCell
-                onClick={() => onCellClick({ x: colIndex + 1, y: rowIndex + 1 })}
+                onClick={() => onCellClick({ x: rowIndex + 1, y: colIndex + 1 })}
                 isActive={hoveredCell?.x >= colIndex + 1 && hoveredCell?.y >= rowIndex + 1}
                 onMouseOver={() => setHoveredCell({ x: colIndex + 1, y: rowIndex + 1 })}
                 key={`${rowIndex}-${colIndex}`}

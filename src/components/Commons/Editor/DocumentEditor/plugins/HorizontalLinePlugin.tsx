@@ -13,7 +13,10 @@ const HorizontalPlugin = ({ label }: Props) => {
 
   return (
     <StyledButtonView
-      onClick={() => editor.chain().focus().setHorizontalRule().run()}
+      onClick={(e) => {
+        e.stopPropagation();
+        editor.chain().focus().setHorizontalRule().run();
+      }}
       className='block w-full'
     >
       <HorizontalLineIcon /> {label}
