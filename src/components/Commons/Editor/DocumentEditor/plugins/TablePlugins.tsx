@@ -141,7 +141,11 @@ export const TablePluginFactory = ({ plugin }: TablePluginFactoryProps) => {
   );
 };
 
-export const InsertDefaultTablePlugin = ({ rows, cols, withHeaderRow }: InsertTablePluginProps) => {
+export const InsertDefaultTablePlugin = ({
+  rows = 3,
+  cols = 3,
+  withHeaderRow,
+}: InsertTablePluginProps) => {
   return (
     <PluginWrapper>
       {({ editor }) => (
