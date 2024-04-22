@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@emotion/react';
 import theme from './styles/theme';
 import { ConfigProvider } from 'antd';
-import { DocumentEditor, ProviderTree } from './components';
+import { ProviderTree } from './components';
 import { createProviderConfig } from './components/ProviderTree/ProviderTree';
 import { NotificationProvider } from './contexts';
 import { I18nextProvider } from 'react-i18next';
@@ -43,11 +43,7 @@ const App = () => {
     createProviderConfig(NotificationProvider),
   ];
 
-  return (
-    <ProviderTree providers={providersAndConfigs}>
-      <DocumentEditor />
-    </ProviderTree>
-  );
+  return <ProviderTree providers={providersAndConfigs}>App</ProviderTree>;
 };
 
 export default App;

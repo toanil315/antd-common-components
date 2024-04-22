@@ -4,7 +4,6 @@ import TextStyle, { TextStyleOptions } from '@tiptap/extension-text-style';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
-import Dropcursor from '@tiptap/extension-dropcursor';
 import Image from '@tiptap/extension-image';
 import Table from '@tiptap/extension-table';
 import TableCell from '@tiptap/extension-table-cell';
@@ -18,14 +17,14 @@ import Superscript from '@tiptap/extension-superscript';
 import Subscript from '@tiptap/extension-subscript';
 import { EditorProvider } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import React from 'react';
 import { StyledDocumentEditor } from './styled';
 import MenuBar from './MenuBar';
 import BubbleMenu from '@tiptap/extension-bubble-menu';
 import TableBubbleMenu from './bubble-menus/TableBubbleMenu';
+import EditorContentManager from './EditorContentManager';
 
 const extensions = [
-  Color.configure({ types: [TextStyle.name, ListItem.name] }),
+  Color.configure({ types: [TextStyle.name, ListItem.name, 'textStyle'] }),
   TextStyle.configure({ types: [ListItem.name] } as Partial<TextStyleOptions>),
   TextAlign.configure({
     types: ['heading', 'paragraph', 'ordered-list', 'bullet-list'],
@@ -35,7 +34,6 @@ const extensions = [
     autolink: true,
   }),
   Image,
-  Dropcursor,
   Table.configure({
     resizable: true,
   }),
@@ -47,9 +45,6 @@ const extensions = [
     types: ['textStyle'],
   }),
   FontSize.configure({
-    types: ['textStyle'],
-  }),
-  Color.configure({
     types: ['textStyle'],
   }),
   Highlight.configure({
@@ -70,17 +65,22 @@ const extensions = [
   }),
 ];
 
-const content = '';
+interface Props {
+  value?: string;
+  onChange?: (value: string) => void;
+}
 
-export default () => {
+export default ({ value, onChange }: Props) => {
   return (
     <StyledDocumentEditor>
       <EditorProvider
+        content={value}
         slotBefore={<MenuBar />}
         extensions={extensions}
-        content={content}
+        onUpdate={({ editor }) => onChange && onChange(editor.getHTML())}
       >
         <TableBubbleMenu />
+        <EditorContentManager value={value} />
       </EditorProvider>
     </StyledDocumentEditor>
   );
