@@ -15,14 +15,9 @@ export const usePagination = ({ page: defaultPage, limit: defaultLimit }: UsePag
   const [page, setPage] = useState(getInitialPageAndLimit('page', defaultPage));
   const [limit, setLimit] = useState(getInitialPageAndLimit('limit', defaultLimit));
 
-  const onPageChange = (page: number, limit: number, searchParams: URLSearchParams) => {
-    searchParams.delete('page');
-    searchParams.delete('limit');
-    searchParams.append('page', String(page));
-    searchParams.append('limit', String(limit));
+  const onPageChange = (page: number, limit: number) => {
     setPage(page);
     setLimit(limit);
-    return searchParams;
   };
 
   return {

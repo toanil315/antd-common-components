@@ -1,4 +1,3 @@
-import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@emotion/react';
 import theme from './styles/theme';
@@ -8,6 +7,11 @@ import { createProviderConfig } from './components/ProviderTree/ProviderTree';
 import { NotificationProvider } from './contexts';
 import { I18nextProvider } from 'react-i18next';
 import i18n from '@/i18n';
+import { RouterProvider, createRouter } from '@tanstack/react-router';
+import { routeTree } from './routeTree.gen';
+
+// Create a new router instance
+const router = createRouter({ routeTree });
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,7 +43,7 @@ const App = () => {
     createProviderConfig(ConfigProvider, {
       theme: antdTheme,
     }),
-    createProviderConfig(BrowserRouter),
+    createProviderConfig(RouterProvider, { router }),
     createProviderConfig(NotificationProvider),
   ];
 

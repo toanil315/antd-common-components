@@ -21,7 +21,6 @@ const Table = ({ tableInstance, totalElements, ...restProps }: Props) => {
   } = useDimension();
 
   const handleChange: TableProps['onChange'] = (paginationValue, filterValue, sortValue) => {
-    console.log('====paginationValue', paginationValue);
     tableInstance.onChange(paginationValue, filterValue, sortValue, restProps.dataSource as any);
   };
 

@@ -1,9 +1,9 @@
 import { EmptyIcon } from '@/components/Icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
 import { StyledPageEmpty } from './styled';
 import { ROUTES } from '@/constants';
+import { Link } from '@tanstack/react-router';
 
 const PageEmpty = () => {
   const { t } = useTranslation();
