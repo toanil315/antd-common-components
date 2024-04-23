@@ -144,7 +144,7 @@ const getInitialSort = (defaultSort?: SortParams): Partial<SortParams> => {
 const getInitialFilter = (defaultFilter?: FilterParams): Partial<FilterParams> => {
   const searchParams = new URLSearchParams(window.location.search);
   const valuesString = searchParams.getAll('filter')?.[0];
-  const valuesArr = JSON.parse(valuesString);
+  const valuesArr = valuesString ? JSON.parse(valuesString) : null;
   let result: Record<string, unknown[]> = {};
 
   if (valuesArr) {

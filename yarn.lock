@@ -2670,6 +2670,14 @@
   resolved "https://registry.yarnpkg.com/@testing-library/user-event/-/user-event-14.5.2.tgz#db7257d727c891905947bd1c1a99da20e03c2ebd"
   integrity sha512-YAh82Wh4TIrxYLmfGcixwD18oIjyC1pFQC2Y01F2lzV2HTMiYrI0nze0FD0ocB//CKS/7jIUgae+adPqxK5yCQ==
 
+"@tinymce/tinymce-react@^5.0.1":
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/@tinymce/tinymce-react/-/tinymce-react-5.0.1.tgz#478bbdadf0f4bff9f82d596799e7306f8b530f38"
+  integrity sha512-tw6yNRqrMGP1iJNeY14wvGsUayC9fc1QpJa7tAvdmeBrUlllyF9PpsrbfvYd+2k8t+w0r2Hq+foTzLZ1d27Fyw==
+  dependencies:
+    prop-types "^15.6.2"
+    tinymce "^7.0.0 || ^6.0.0 || ^5.5.1"
+
 "@tiptap/core@^2.0.0-beta.116", "@tiptap/core@^2.3.0":
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/@tiptap/core/-/core-2.3.0.tgz#5a0b41b63af62860dec6d6b689e2893118f76e83"
@@ -7564,7 +7572,7 @@ prompts@^2.4.0:
     kleur "^3.0.3"
     sisteransi "^1.0.5"
 
-prop-types@^15.7.2, prop-types@^15.8.1:
+prop-types@^15.6.2, prop-types@^15.7.2, prop-types@^15.8.1:
   version "15.8.1"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.8.1.tgz#67d87bf1a694f48435cf332c24af10214a3140b5"
   integrity sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==
@@ -9196,6 +9204,11 @@ tiny-warning@^1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/tiny-warning/-/tiny-warning-1.0.3.tgz#94a30db453df4c643d0fd566060d60a875d84754"
   integrity sha512-lBN9zLN/oAf68o3zNXYrdCt1kP8WsiGW8Oo2ka41b2IM5JL/S1CTyX1rW0mb/zSuJun0ZUrDxx4sqvYS2FWzPA==
+
+"tinymce@^7.0.0 || ^6.0.0 || ^5.5.1":
+  version "7.0.1"
+  resolved "https://registry.yarnpkg.com/tinymce/-/tinymce-7.0.1.tgz#743f4003027a13497654a5ce5ca74793815386f7"
+  integrity sha512-0a7DJnhniBx2psRuKcVQ9g4hujN6PAR4fPS0NSF1T1luH1RBDZVVEn2pGND6Ly+AW1lUm/cHOHjsasqBelMhbw==
 
 tinyspy@^2.2.0:
   version "2.2.1"
