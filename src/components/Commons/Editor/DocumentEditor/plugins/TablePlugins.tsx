@@ -46,7 +46,7 @@ const PluginWrapper = ({ children }: { children: (args: { editor: any }) => Reac
 
   if (!children) return null;
 
-  return children({ editor });
+  return <>{children({ editor })}</>;
 };
 
 export const TablePluginFactory = ({ plugin, inView }: TablePluginFactoryProps) => {

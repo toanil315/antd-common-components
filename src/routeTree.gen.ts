@@ -20,6 +20,7 @@ import { Route as AuthImport } from './routes/_auth'
 
 const IndexIndexLazyImport = createFileRoute('/_index/')()
 const IndexPostsRouteLazyImport = createFileRoute('/_index/posts')()
+const IndexFlowRouteLazyImport = createFileRoute('/_index/flow')()
 const IndexAboutRouteLazyImport = createFileRoute('/_index/about')()
 const AuthSignUpRouteLazyImport = createFileRoute('/_auth/sign-up')()
 const AuthLoginRouteLazyImport = createFileRoute('/_auth/login')()
@@ -52,6 +53,13 @@ const IndexPostsRouteLazyRoute = IndexPostsRouteLazyImport.update({
   getParentRoute: () => IndexRoute,
 } as any).lazy(() =>
   import('./routes/_index/posts/route.lazy').then((d) => d.Route),
+)
+
+const IndexFlowRouteLazyRoute = IndexFlowRouteLazyImport.update({
+  path: '/flow',
+  getParentRoute: () => IndexRoute,
+} as any).lazy(() =>
+  import('./routes/_index/flow/route.lazy').then((d) => d.Route),
 )
 
 const IndexAboutRouteLazyRoute = IndexAboutRouteLazyImport.update({
@@ -127,6 +135,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexAboutRouteLazyImport
       parentRoute: typeof IndexImport
     }
+    '/_index/flow': {
+      preLoaderRoute: typeof IndexFlowRouteLazyImport
+      parentRoute: typeof IndexImport
+    }
     '/_index/posts': {
       preLoaderRoute: typeof IndexPostsRouteLazyImport
       parentRoute: typeof IndexImport
@@ -160,6 +172,7 @@ export const routeTree = rootRoute.addChildren([
   AuthRoute.addChildren([AuthLoginRouteLazyRoute, AuthSignUpRouteLazyRoute]),
   IndexRoute.addChildren([
     IndexAboutRouteLazyRoute,
+    IndexFlowRouteLazyRoute,
     IndexPostsRouteLazyRoute.addChildren([
       IndexPostsIdRouteLazyRoute.addChildren([
         IndexPostsIdEditRouteLazyRoute,
