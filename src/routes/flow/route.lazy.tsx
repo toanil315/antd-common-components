@@ -1,7 +1,7 @@
 import { FlowChart } from '@/components';
 import { createLazyFileRoute } from '@tanstack/react-router';
 
-export const Route = createLazyFileRoute('/_index/flow')({
+export const Route = createLazyFileRoute('/flow')({
   component: Flow,
 });
 

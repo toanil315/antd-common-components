@@ -5,6 +5,14 @@ interface Props {
   defaultData?: string;
 }
 
+export interface MermaidNode {
+  id: string;
+  shape: MermaidShape;
+  text: string;
+  bgColor?: string;
+  color?: string;
+}
+
 export type MermaidShape = 'rect' | 'diamond' | 'circle';
 
 mermaid.initialize({
@@ -46,9 +54,35 @@ interface PendingEdge {
   targetPoint?: Point;
 }
 
+const getNodePropsStr = (data: string, nodeId: string) => {
+  const regex = /%%(.*?)%%/g;
+  let match;
+  const matches = [];
+
+  while ((match = regex.exec(data)) !== null) {
+    matches.push(match[1].trim());
+  }
+
+  return matches.find((match) => match.includes(nodeId));
+};
+
+const getNodeContent = ({
+  id,
+  nodeStr,
+  shape,
+}: {
+  id: string;
+  nodeStr: string;
+  shape: MermaidShape;
+}) => {
+  const shapeSyntax = SHAPE_SYNTAX[shape];
+  return nodeStr.replace(`${id}${shapeSyntax.start}`, '').replace(shapeSyntax.end, '');
+};
+
 export const useMermaid = ({ defaultData }: Props) => {
   const [data, setData] = useState<string>(defaultData || '');
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedNode, setSelectedNode] = useState<MermaidNode | null>(null);
   const [floatingPoint, setFloatingPoint] = useState<{ x: number; y: number } | null>(null);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
   const [pendingEdge, setPendingEdge] = useState<PendingEdge | null>(null);
@@ -56,25 +90,16 @@ export const useMermaid = ({ defaultData }: Props) => {
   const floatingPointRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    mermaid.contentLoaded();
-  }, []);
+    setData(defaultData || '');
+  }, [defaultData]);
 
   useEffect(() => {
-    mermaidRef.current?.removeAttribute('data-processed');
-    mermaid.contentLoaded();
-  }, [data]);
-
-  useEffect(() => {
-    const handleClickEventInMermaidEditor = (e: MouseEvent) => {
-      if (selectedNodeId) setFloatingPoint({ x: e.clientX, y: e.clientY });
-    };
-
-    window.addEventListener('click', handleClickEventInMermaidEditor);
+    loadFlowChart();
 
     return () => {
-      window.removeEventListener('click', handleClickEventInMermaidEditor);
+      removeListenerToEdges();
     };
-  }, [setFloatingPoint, selectedNodeId, isConnecting, setIsConnecting]);
+  }, [data]);
 
   useEffect(() => {
     const previewEdge = (e: MouseEvent) => {
@@ -100,20 +125,89 @@ export const useMermaid = ({ defaultData }: Props) => {
         return;
       }
       setSelectedNodeId(nodeId);
+      const nodeDom = document.querySelector(`g.node[data-id=${nodeId}]`);
+      if (nodeDom) {
+        const { left, top, height } = nodeDom.getBoundingClientRect();
+        setFloatingPoint({ x: left, y: top + height });
+      }
     };
   }, [selectedNodeId, isConnecting, pendingEdge]);
+
+  useEffect(() => {
+    if (selectedNodeId) {
+      const nodeContent = getNodePropsStr(data, selectedNodeId);
+      if (nodeContent) {
+        const shape = Object.keys(SHAPE_SYNTAX).find(
+          (key) =>
+            nodeContent.includes(SHAPE_SYNTAX[key as 'rect'].start) &&
+            nodeContent.includes(SHAPE_SYNTAX[key as 'rect'].end),
+        ) as MermaidShape;
+        setSelectedNode({
+          id: selectedNodeId,
+          shape: shape as MermaidShape,
+          text: getNodeContent({
+            id: selectedNodeId,
+            nodeStr: nodeContent,
+            shape: shape as MermaidShape,
+          }),
+        });
+      }
+    }
+  }, [selectedNodeId, data]);
+
+  const loadFlowChart = async () => {
+    mermaidRef.current?.removeAttribute('data-processed');
+    await mermaid.run();
+    addListenerToEdges();
+  };
+
+  const handleEdgeClick = (e: MouseEvent) => {
+    if (!isConnecting) {
+      console.log('edge clicked', (e.target as Element)?.id.replace('[clone]', ''));
+    }
+  };
+
+  const addListenerToEdges = () => {
+    const edges = window.document.querySelectorAll('.edgePaths path.flowchart-link');
+    edges.forEach((edge) => {
+      // because default mermaid edge is a thin line so hard to clickable, we clone it and make it thicker for better UX
+      const cloneEdge = edge.cloneNode(true) as SVGAElement;
+      cloneEdge.id = `${edge.id}[clone]`;
+      cloneEdge.style.cursor = 'pointer';
+      cloneEdge.style.strokeWidth = '20px';
+      cloneEdge.style.opacity = '0';
+      window.document.querySelector('.edgePaths')?.appendChild(cloneEdge);
+      cloneEdge.addEventListener('click', handleEdgeClick);
+    });
+  };
+
+  const removeListenerToEdges = () => {
+    const edges = window.document.querySelectorAll('.edgePaths path.flowchart-link');
+    edges.forEach((edge) => {
+      const cloneEdge = document.querySelector(`#${edge.id}-clone`);
+      (cloneEdge as any)?.removeEventListener('click', handleEdgeClick);
+    });
+  };
 
   const startCreateEdge = () => {
     if (selectedNodeId && floatingPoint) {
       setIsConnecting(true);
       setPendingEdge({
         sourceId: selectedNodeId,
-        sourcePoint: floatingPoint,
+        sourcePoint: {
+          x: floatingPoint.x,
+          y: floatingPoint.y,
+        },
       });
       // close dropdown
       setSelectedNodeId(null);
       setFloatingPoint(null);
     }
+  };
+
+  const cancelCreateEdge = () => {
+    setIsConnecting(false);
+    setPendingEdge(null);
   };
 
   const addEdge = (sourceId: string, targetId: string) => {
@@ -149,7 +243,23 @@ export const useMermaid = ({ defaultData }: Props) => {
     setFloatingPoint(null);
   };
 
-  console.log('floatingPoint', floatingPoint);
+  const setNodeProps = (node: MermaidNode) => {
+    if (node.id) {
+      const nodeStr = getNodePropsStr(data, node.id as string);
+      const newNodeContent = `${node.id}${SHAPE_SYNTAX[node.shape].start}${node.text}${
+        SHAPE_SYNTAX[node.shape].end
+      }`;
+      console.log(nodeStr, newNodeContent);
+      if (nodeStr) {
+        setData((prev) => {
+          const newData = prev.replaceAll(nodeStr, newNodeContent);
+          console.log('newData', newData);
+          return newData;
+        });
+        setSelectedNodeId(node.id);
+      }
+    }
+  };
 
   return {
     mermaidData: {
@@ -158,6 +268,7 @@ export const useMermaid = ({ defaultData }: Props) => {
       floatingPoint,
       selectedNodeId,
       pendingEdge,
+      selectedNode,
     },
     actions: {
       setData,
@@ -167,6 +278,8 @@ export const useMermaid = ({ defaultData }: Props) => {
       addEdge,
       startCreateEdge,
       setSelectedNodeId,
+      cancelCreateEdge,
+      setNodeProps,
     },
     refs: {
       mermaidRef,

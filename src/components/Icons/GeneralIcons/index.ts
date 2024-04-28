@@ -12,3 +12,6 @@ export { default as ExportExcelIcon } from './ExportExcelIcon';
 export { default as TrashIcon } from './TrashIcon';
 export { default as ThreeDotsVerticalIcon } from './ThreeDotsVerticalIcon';
 export { default as EmptyIcon } from './EmptyIcon';
+export { default as RectIcon } from './RectIcon';
+export { default as CircleIcon } from './CircleIcon';
+export { default as DiamondIcon } from './DiamondIcon';

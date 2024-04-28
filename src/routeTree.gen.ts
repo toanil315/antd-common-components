@@ -18,9 +18,9 @@ import { Route as AuthImport } from './routes/_auth'
 
 // Create Virtual Routes
 
+const FlowRouteLazyImport = createFileRoute('/flow')()
 const IndexIndexLazyImport = createFileRoute('/_index/')()
 const IndexPostsRouteLazyImport = createFileRoute('/_index/posts')()
-const IndexFlowRouteLazyImport = createFileRoute('/_index/flow')()
 const IndexAboutRouteLazyImport = createFileRoute('/_index/about')()
 const AuthSignUpRouteLazyImport = createFileRoute('/_auth/sign-up')()
 const AuthLoginRouteLazyImport = createFileRoute('/_auth/login')()
@@ -32,6 +32,11 @@ const IndexPostsIdEditRouteLazyImport = createFileRoute(
 )()
 
 // Create/Update Routes
+
+const FlowRouteLazyRoute = FlowRouteLazyImport.update({
+  path: '/flow',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() => import('./routes/flow/route.lazy').then((d) => d.Route))
 
 const IndexRoute = IndexImport.update({
   id: '/_index',
@@ -53,13 +58,6 @@ const IndexPostsRouteLazyRoute = IndexPostsRouteLazyImport.update({
   getParentRoute: () => IndexRoute,
 } as any).lazy(() =>
   import('./routes/_index/posts/route.lazy').then((d) => d.Route),
-)
-
-const IndexFlowRouteLazyRoute = IndexFlowRouteLazyImport.update({
-  path: '/flow',
-  getParentRoute: () => IndexRoute,
-} as any).lazy(() =>
-  import('./routes/_index/flow/route.lazy').then((d) => d.Route),
 )
 
 const IndexAboutRouteLazyRoute = IndexAboutRouteLazyImport.update({
@@ -123,6 +121,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
+    '/flow': {
+      preLoaderRoute: typeof FlowRouteLazyImport
+      parentRoute: typeof rootRoute
+    }
     '/_auth/login': {
       preLoaderRoute: typeof AuthLoginRouteLazyImport
       parentRoute: typeof AuthImport
@@ -133,10 +135,6 @@ declare module '@tanstack/react-router' {
     }
     '/_index/about': {
       preLoaderRoute: typeof IndexAboutRouteLazyImport
-      parentRoute: typeof IndexImport
-    }
-    '/_index/flow': {
-      preLoaderRoute: typeof IndexFlowRouteLazyImport
       parentRoute: typeof IndexImport
     }
     '/_index/posts': {
@@ -172,7 +170,6 @@ export const routeTree = rootRoute.addChildren([
   AuthRoute.addChildren([AuthLoginRouteLazyRoute, AuthSignUpRouteLazyRoute]),
   IndexRoute.addChildren([
     IndexAboutRouteLazyRoute,
-    IndexFlowRouteLazyRoute,
     IndexPostsRouteLazyRoute.addChildren([
       IndexPostsIdRouteLazyRoute.addChildren([
         IndexPostsIdEditRouteLazyRoute,
@@ -182,6 +179,7 @@ export const routeTree = rootRoute.addChildren([
     ]),
     IndexIndexLazyRoute,
   ]),
+  FlowRouteLazyRoute,
 ])
 
 /* prettier-ignore-end */
