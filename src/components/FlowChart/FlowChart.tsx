@@ -6,16 +6,18 @@ import NodeSetting from './components/NodeSettings';
 
 const defaultData = `
 graph LR;
-A --> B;
-C --> A;
-A --> C;
-%%A[Text]%%;
-A[Text];
-%%B{Text}%%;
-B{Text};
-%%C((Text))%%;
-C((Text));
-click A callback;
+node-123 -- text --> node-124;
+node-125 --> node-123;
+node-123 --> node-125;
+%%node-123[Text]%%;
+node-123[Text];
+%%node-124{Text}%%;
+node-124{Text};
+%%node-125((Text))%%;
+node-125((Text));
+click node-123 callback;
+click node-124 callback;
+click node-125 callback;
 `;
 
 const FlowChart = () => {

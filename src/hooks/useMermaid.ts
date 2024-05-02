@@ -5,27 +5,21 @@ interface Props {
   defaultData?: string;
 }
 
+interface NodeStyle {
+  fill: string;
+  color: string;
+  'stroke-width': number;
+  stroke: string;
+}
+
 export interface MermaidNode {
   id: string;
   shape: MermaidShape;
   text: string;
-  bgColor?: string;
-  color?: string;
+  styles?: NodeStyle;
 }
 
 export type MermaidShape = 'rect' | 'diamond' | 'circle';
-
-mermaid.initialize({
-  startOnLoad: true,
-  theme: 'default',
-  securityLevel: 'loose',
-});
-
-declare global {
-  interface Window {
-    callback: (e: any) => void;
-  }
-}
 
 const SHAPE_SYNTAX: Record<MermaidShape, { start: string; end: string }> = {
   rect: {
@@ -54,8 +48,19 @@ interface PendingEdge {
   targetPoint?: Point;
 }
 
-const getNodePropsStr = (data: string, nodeId: string) => {
-  const regex = /%%(.*?)%%/g;
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'default',
+  securityLevel: 'loose',
+});
+
+declare global {
+  interface Window {
+    callback: (e: any) => void;
+  }
+}
+
+const findAllByRegex = (data: string, regex: RegExp) => {
   let match;
   const matches = [];
 
@@ -63,7 +68,69 @@ const getNodePropsStr = (data: string, nodeId: string) => {
     matches.push(match[1].trim());
   }
 
+  return matches;
+};
+
+const getNodePropsStr = (data: string, nodeId: string) => {
+  const regex = /%%(.*?)%%/g;
+  const matches = findAllByRegex(data, regex);
   return matches.find((match) => match.includes(nodeId));
+};
+
+const extractNodeStyles = (nodeStyleStr?: string) => {
+  const defaultStyle: NodeStyle = {
+    fill: '#ECECFF',
+    color: '#333',
+    stroke: '#9370DB',
+    'stroke-width': 1,
+  };
+
+  if (!nodeStyleStr) return defaultStyle;
+
+  const styleStrs = nodeStyleStr
+    .split(',')
+    .map((str) => str.trim())
+    .filter(Boolean);
+
+  styleStrs.forEach((str) => {
+    const [key, value] = str.split(':');
+    if (key && value) {
+      if (key === 'stroke-width') {
+        defaultStyle[key as 'stroke-width'] = Number(value.replace('px', ''));
+      } else {
+        defaultStyle[key as 'fill'] = value;
+      }
+    }
+  });
+
+  return defaultStyle;
+};
+
+const getNodeStylesStr = (data: string, nodeId: string) => {
+  const regex = /style\s(.*?);/g;
+  const matches = findAllByRegex(data, regex);
+  const styleStr = matches.find((match) => match.includes(nodeId));
+  return styleStr ? `style ${styleStr};` : undefined;
+};
+
+const getNodeStyles = (data: string, nodeId: string) => {
+  const nodeStyleStr = getNodeStylesStr(data, nodeId);
+  console.log('nodeStyleStr', nodeStyleStr);
+  return extractNodeStyles(
+    nodeStyleStr?.replace('style', '').replace(nodeId, '').replace(';', '').replace('\n', ''),
+  );
+};
+
+const serializeNodeStyles = (styles: NodeStyle, nodeId: string) => {
+  const styleStr = Object.entries(styles)
+    .map(([key, value]) => {
+      if (key === 'stroke-width') {
+        return `${key}:${value}px`;
+      }
+      return `${key}:${value}`;
+    })
+    .join(',');
+  return `style ${nodeId} ${styleStr};\n`;
 };
 
 const getNodeContent = ({
@@ -79,13 +146,22 @@ const getNodeContent = ({
   return nodeStr.replace(`${id}${shapeSyntax.start}`, '').replace(shapeSyntax.end, '');
 };
 
+const appendNewStyle = (data: string, oldStyle: string, newStyle: string) => {
+  let newData = data;
+  if (oldStyle) {
+    newData = data.replace(oldStyle, '');
+  }
+  return newData + newStyle;
+};
+
 export const useMermaid = ({ defaultData }: Props) => {
   const [data, setData] = useState<string>(defaultData || '');
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [selectedNode, setSelectedNode] = useState<MermaidNode | null>(null);
   const [floatingPoint, setFloatingPoint] = useState<{ x: number; y: number } | null>(null);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
   const [pendingEdge, setPendingEdge] = useState<PendingEdge | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedNode, setSelectedNode] = useState<MermaidNode | null>(null);
+
   const mermaidRef = useRef<HTMLDivElement | null>(null);
   const floatingPointRef = useRef<HTMLDivElement | null>(null);
 
@@ -142,6 +218,12 @@ export const useMermaid = ({ defaultData }: Props) => {
             nodeContent.includes(SHAPE_SYNTAX[key as 'rect'].start) &&
             nodeContent.includes(SHAPE_SYNTAX[key as 'rect'].end),
         ) as MermaidShape;
+        console.log(
+          `getNodeStyles(data, selectedNodeId)`,
+          selectedNodeId,
+          getNodeStyles(data, selectedNodeId),
+        );
+
         setSelectedNode({
           id: selectedNodeId,
           shape: shape as MermaidShape,
@@ -150,6 +232,7 @@ export const useMermaid = ({ defaultData }: Props) => {
             nodeStr: nodeContent,
             shape: shape as MermaidShape,
           }),
+          styles: getNodeStyles(data, selectedNodeId),
         });
       }
     }
@@ -184,7 +267,7 @@ export const useMermaid = ({ defaultData }: Props) => {
   const removeListenerToEdges = () => {
     const edges = window.document.querySelectorAll('.edgePaths path.flowchart-link');
     edges.forEach((edge) => {
-      const cloneEdge = document.querySelector(`#${edge.id}-clone`);
+      const cloneEdge = document.querySelector(`#${edge.id}[clone]`);
       (cloneEdge as any)?.removeEventListener('click', handleEdgeClick);
     });
   };
@@ -226,6 +309,15 @@ export const useMermaid = ({ defaultData }: Props) => {
         ${prev}
         %%${nodeContent}%%;
         ${nodeContent};
+        ${serializeNodeStyles(
+          {
+            fill: '#ECECFF',
+            color: '#333',
+            stroke: '#9370DB',
+            'stroke-width': 1,
+          },
+          id,
+        )}
         click ${id} callback;\n
       `;
     });
@@ -249,17 +341,21 @@ export const useMermaid = ({ defaultData }: Props) => {
       const newNodeContent = `${node.id}${SHAPE_SYNTAX[node.shape].start}${node.text}${
         SHAPE_SYNTAX[node.shape].end
       }`;
-      console.log(nodeStr, newNodeContent);
+      const oldNodeStyles = getNodeStylesStr(data, node.id as string);
+      const newNodeStyles = serializeNodeStyles(node.styles as NodeStyle, node.id as string);
       if (nodeStr) {
         setData((prev) => {
-          const newData = prev.replaceAll(nodeStr, newNodeContent);
-          console.log('newData', newData);
-          return newData;
+          let newData = String(prev.replaceAll(nodeStr, newNodeContent));
+          newData = appendNewStyle(newData, oldNodeStyles || '', newNodeStyles);
+
+          return newData.split('\n').filter(Boolean).join('\n') + '\n';
         });
         setSelectedNodeId(node.id);
       }
     }
   };
+
+  console.log('selectedNode', selectedNodeId, selectedNode);
 
   return {
     mermaidData: {
