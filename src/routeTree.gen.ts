@@ -19,6 +19,7 @@ import { Route as AuthImport } from './routes/_auth'
 // Create Virtual Routes
 
 const FlowRouteLazyImport = createFileRoute('/flow')()
+const TourIndexLazyImport = createFileRoute('/tour/')()
 const IndexIndexLazyImport = createFileRoute('/_index/')()
 const IndexPostsRouteLazyImport = createFileRoute('/_index/posts')()
 const IndexAboutRouteLazyImport = createFileRoute('/_index/about')()
@@ -47,6 +48,11 @@ const AuthRoute = AuthImport.update({
   id: '/_auth',
   getParentRoute: () => rootRoute,
 } as any)
+
+const TourIndexLazyRoute = TourIndexLazyImport.update({
+  path: '/tour/',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() => import('./routes/tour/index.lazy').then((d) => d.Route))
 
 const IndexIndexLazyRoute = IndexIndexLazyImport.update({
   path: '/',
@@ -145,6 +151,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexIndexLazyImport
       parentRoute: typeof IndexImport
     }
+    '/tour/': {
+      preLoaderRoute: typeof TourIndexLazyImport
+      parentRoute: typeof rootRoute
+    }
     '/_index/posts/$id': {
       preLoaderRoute: typeof IndexPostsIdRouteLazyImport
       parentRoute: typeof IndexPostsRouteLazyImport
@@ -180,6 +190,7 @@ export const routeTree = rootRoute.addChildren([
     IndexIndexLazyRoute,
   ]),
   FlowRouteLazyRoute,
+  TourIndexLazyRoute,
 ])
 
 /* prettier-ignore-end */
