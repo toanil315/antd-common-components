@@ -9,6 +9,7 @@ export const Route = createLazyFileRoute('/tour/')({
 interface Step {
   id: string;
   domHierarchy: string[];
+  url: string;
 }
 
 interface TourPanelProps {
@@ -49,7 +50,7 @@ function WebTourCreator() {
 
   const handleAddStep = () => {
     iframeElementRef.current?.contentWindow?.postMessage('clean up', '*');
-    const newStep = { id: String(Date.now()), domHierarchy: [] };
+    const newStep = { id: String(Date.now()), domHierarchy: [], url: '' };
     setSteps((prevSteps) => {
       return [...prevSteps, newStep];
     });
@@ -142,10 +143,10 @@ const StepDetailPanel = ({
     const handleIframeMessages = (e: MessageEvent<any>) => {
       if (e.data.type === 'selected element') {
         delete e.data.type;
-        console.log(e.data);
         onStepChange({
           ...step,
           domHierarchy: e.data.domHierarchy,
+          url: e.data.url,
         });
         iframeElement.contentWindow?.postMessage(
           {

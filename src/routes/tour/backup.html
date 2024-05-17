@@ -1,148 +1,120 @@
-<!doctype html>
-<html lang="en">
+<script>
+    const parent = window.parent;
+    let isGettingElement = false;
 
-<head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kaiso - Obtain and maintain ISO with ease</title>
-</head>
+    function getIndex(child) {
+        const parentElementWhichSameTypes = Array.from(child.parentElement.children).filter((el) => el.tagName === child.tagName);
+        if (parentElementWhichSameTypes.length === 1) return -1;
+        return [].indexOf.call(parentElementWhichSameTypes, child) + 1;
+    }
 
-<body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-    <script>
-        (function (h, o, t, j, a, r) {
-            h.hj =
-                h.hj ||
-                function () {
-                    (h.hj.q = h.hj.q || []).push(arguments);
-                };
-            h._hjSettings = {
-                hjid: '%VITE_HOTJAR_ID%',
-                hjsv: '%VITE_HOTJAR_SNIPPET_VERSION%',
-            };
-            a = o.getElementsByTagName('head')[0];
-            r = o.createElement('script');
-            r.async = 1;
-            r.src = t + h._hjSettings.hjid + j + h._hjSettings.hjsv;
-            a.appendChild(r);
-        })(window, document, 'https://static.hotjar.com/c/hotjar-', '.js?sv=');
-    </script>
-    <script>
-        const parent = window.parent;
-        let isGettingElement = false;
-
-        function getIndex(child) {
-            const parentElementWhichSameTypes = Array.from(child.parentElement.children).filter((el) => el.tagName === child.tagName);
-            if (parentElementWhichSameTypes.length === 1) return -1;
-            return [].indexOf.call(parentElementWhichSameTypes, child) + 1;
+    function getDomHierarchy(e) {
+        const result = [];
+        const indexOfElement = getIndex(e);
+        result.push(e.tagName + (indexOfElement === -1 ? '' : `:nth-child(${indexOfElement})`));
+        while (e?.parentNode.tagName !== 'HTML') {
+            const nthChild = getIndex(e?.parentNode);
+            if (nthChild === -1) {
+                result.push(e?.parentNode.tagName);
+            }
+            else {
+                result.push(e?.parentNode.tagName + `:nth-child(${nthChild})`);
+            }
+            e = e?.parentNode;
         }
+        return result.map(e => e.toLowerCase()).reverse();
+    }
 
-        function getDomHierarchy(e) {
-            const result = [];
-            const indexOfElement = getIndex(e);
-            result.push(e.tagName + (indexOfElement === -1 ? '' : `:nth-child(${indexOfElement})`));
-            while (e?.parentNode.tagName !== 'HTML') {
-                const nthChild = getIndex(e?.parentNode);
-                if (nthChild === -1) {
-                    result.push(e?.parentNode.tagName);
+    const disableClickEvent = (event) => {
+        event.target.pointerEvents = "none";
+
+        try {
+            parent.postMessage({
+                type: 'selected element',
+                domHierarchy: getDomHierarchy(event.target),
+                props: {
+                    class: event.target.className,
+                    id: event.target.id,
                 }
-                else {
-                    result.push(e?.parentNode.tagName + `:nth-child(${nthChild})`);
-                }
-                e = e?.parentNode;
-            }
-            return result.map(e => e.toLowerCase()).reverse();
+            }, '*')
+        }
+        catch (error) {
+            console.log("parent.postMessage error", error)
         }
 
-        const disableClickEvent = (event) => {
-            event.target.pointerEvents = "none";
+        setTimeout(() => {
+            window.dispatchEvent(new Event('release-pointer-events'));
+        }, 500);
+    }
 
-            try {
-                parent.postMessage({
-                    type: 'selected element',
-                    domHierarchy: getDomHierarchy(event.target),
-                    props: {
-                        class: event.target.className,
-                        id: event.target.id,
-                    }
-                }, '*')
-            }
-            catch (error) {
-                console.log("parent.postMessage error", error)
-            }
+    function preventClickEvent() {
+        const scrollable = document.body;
+        scrollable.addEventListener('mousedown', disableClickEvent, false);
 
-            setTimeout(() => {
-                window.dispatchEvent(new Event('release-pointer-events'));
-            }, 500);
-        }
-
-        function preventClickEvent() {
-            const scrollable = document.body;
-            scrollable.addEventListener('mousedown', disableClickEvent, false);
-
-            window.addEventListener('release-pointer-events', function () {
-                scrollable.style.pointerEvents = "all";
-            })
-        }
-
-        function releaseClickEvent() {
-            const scrollable = document.body;
-            scrollable.removeEventListener('mousedown', disableClickEvent, false);
-            window.removeEventListener('release-pointer-events', function () {
-                scrollable.style.pointerEvents = "all";
-            })
-        }
-
-        function hightlightELement(el) {
-            const existedElement = document.getElementById('highlighted-element');
-            if (existedElement) {
-                existedElement.remove();
-            }
-
-            if (isGettingElement && el) {
-                el.style.position = 'relative';
-                const newEl = document.createElement('div');
-                newEl.id = 'highlighted-element';
-                newEl.style.position = 'absolute';
-                newEl.style.top = `0`;
-                newEl.style.left = `0`;
-                newEl.style.width = `100%`;
-                newEl.style.height = `100%`;
-                newEl.style.border = '2px solid red';
-                newEl.style.zIndex = '999999';
-                newEl.style.transform = 'scale(1.05)';
-                el.appendChild(newEl);
-            }
-        }
-
-        window.addEventListener('message', function (e) {
-            if (event.data === "start getting element") {
-                isGettingElement = true;
-                preventClickEvent()
-            }
-
-            if (event.data === "end getting element") {
-                isGettingElement = false;
-                releaseClickEvent()
-            }
-
-            if (event.data === 'clean up') {
-                console.log('clean up')
-                isGettingElement = false;
-                hightlightELement(null);
-            }
-
-            if (event.data.type === 'highlight element') {
-                isGettingElement = true;
-                const selectedElement = event.data.element;
-                const { domHierarchy } = selectedElement;
-                const element = document.querySelector(domHierarchy.join(' > '));
-                hightlightELement(element);
-            }
+        window.addEventListener('release-pointer-events', function () {
+            scrollable.style.pointerEvents = "all";
         })
-    </script>
-</body>
+    }
 
-</html>
+    function releaseClickEvent() {
+        const scrollable = document.body;
+        scrollable.removeEventListener('mousedown', disableClickEvent, false);
+        window.removeEventListener('release-pointer-events', function () {
+            scrollable.style.pointerEvents = "all";
+        })
+    }
+
+    function hightlightELement(el) {
+        const existedElement = document.getElementById('highlighted-element');
+        if (existedElement) {
+            existedElement.remove();
+        }
+
+        if (isGettingElement && el) {
+            el.style.position = 'relative';
+            const newEl = document.createElement('div');
+            newEl.id = 'highlighted-element';
+            newEl.style.position = 'absolute';
+            newEl.style.top = `0`;
+            newEl.style.left = `0`;
+            newEl.style.width = `100%`;
+            newEl.style.height = `100%`;
+            newEl.style.border = '2px solid red';
+            newEl.style.zIndex = '999999';
+            newEl.style.transform = 'scale(1.05)';
+            el.appendChild(newEl);
+
+            el.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'center'
+            });
+        }
+    }
+
+    window.addEventListener('message', function (e) {
+        if (event.data === "start getting element") {
+            isGettingElement = true;
+            preventClickEvent()
+        }
+
+        if (event.data === "end getting element") {
+            isGettingElement = false;
+            releaseClickEvent()
+        }
+
+        if (event.data === 'clean up') {
+            console.log('clean up')
+            isGettingElement = false;
+            hightlightELement(null);
+        }
+
+        if (event.data.type === 'highlight element') {
+            isGettingElement = true;
+            const selectedElement = event.data.element;
+            const { domHierarchy } = selectedElement;
+            const element = document.querySelector(domHierarchy.join(' > '));
+            hightlightELement(element);
+        }
+    })
+</script>
