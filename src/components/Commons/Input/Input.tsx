@@ -13,8 +13,8 @@ import { InputProps as AntdInputProps } from 'antd';
 import { DownIcon, ReadOnlyIcon, UpIcon } from '@/components/Icons';
 import { NumberUtil } from '@/utils';
 
-export type InputProps = InputHTMLAttributes<HTMLInputElement> &
-  Partial<AntdInputProps> & {
+export type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange'> &
+  Partial<Omit<AntdInputProps, 'onChange'>> & {
     width?: string;
     suffixIcon?: JSX.Element;
     suffixPosition?: 'left' | 'right';

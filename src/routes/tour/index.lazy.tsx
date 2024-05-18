@@ -1,4 +1,5 @@
-import { Button, PlusIcon } from '@/components';
+import { Button, Input, PlusIcon } from '@/components';
+import { useSaveTour, useTour } from '@/hooks/useTour';
 import { createLazyFileRoute } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 
@@ -6,10 +7,27 @@ export const Route = createLazyFileRoute('/tour/')({
   component: WebTourCreator,
 });
 
+interface Popover {
+  title?: string;
+  description?: string;
+  detailLink?: string;
+  side?: 'top' | 'right' | 'bottom' | 'left';
+  align?: 'start' | 'center' | 'end';
+  showButtons?: ('next' | 'previous' | 'close')[];
+  disableButtons?: ('next' | 'previous' | 'close')[];
+  nextBtnText?: string;
+  prevBtnText?: string;
+  doneBtnText?: string;
+  showProgress?: boolean;
+  progressText?: string;
+  popoverClass?: string;
+}
+
 interface Step {
   id: string;
-  domHierarchy: string[];
+  element: string;
   url: string;
+  popover: Popover;
 }
 
 interface TourPanelProps {
@@ -27,34 +45,51 @@ interface StepDetailPanelProps {
 }
 
 function WebTourCreator() {
-  const [steps, setSteps] = useState<Step[]>([]);
   const [selectedStep, setSelectedStep] = useState<Step | null>(null);
   const iframeElementRef = useRef<HTMLIFrameElement | null>(null);
+  const { data } = useTour();
+  const { mutateAsync } = useSaveTour();
+  const { steps } = data?.data || { steps: [] };
 
-  const saveChanges = () => {
+  const saveChanges = async () => {
     if (selectedStep) {
-      setSteps((prevSteps) => {
-        return prevSteps.map((prevStep) => {
-          if (prevStep.id === selectedStep.id) {
-            return selectedStep;
-          }
+      const newSteps = steps.map((prevStep: Step) => {
+        if (prevStep.id === selectedStep.id) {
+          return selectedStep;
+        }
 
-          return prevStep;
-        });
+        return prevStep;
       });
+      await mutateAsync({ ...data?.data, steps: newSteps });
     }
     iframeElementRef.current?.contentWindow?.postMessage('end getting element', '*');
     iframeElementRef.current?.contentWindow?.postMessage('clean up', '*');
     setSelectedStep(null);
   };
 
-  const handleAddStep = () => {
+  const handleAddStep = async () => {
     iframeElementRef.current?.contentWindow?.postMessage('clean up', '*');
-    const newStep = { id: String(Date.now()), domHierarchy: [], url: '' };
-    setSteps((prevSteps) => {
-      return [...prevSteps, newStep];
-    });
+    const newStep = {
+      id: String(Date.now()),
+      element: '',
+      url: '',
+      popover: { title: 'Popover Title', description: 'Popover Description' },
+    };
+    await mutateAsync({ ...data?.data, steps: [...steps, newStep] });
     setSelectedStep(newStep);
+  };
+
+  const handleStepChange = (step: Step | null) => {
+    setSelectedStep(step);
+    if (step) {
+      iframeElementRef.current?.contentWindow?.postMessage(
+        {
+          type: 'highlight element',
+          step,
+        },
+        '*',
+      );
+    }
   };
 
   const renderPanel = () => {
@@ -72,7 +107,7 @@ function WebTourCreator() {
     return (
       <StepDetailPanel
         step={selectedStep}
-        onStepChange={setSelectedStep}
+        onStepChange={handleStepChange}
         saveChanges={saveChanges}
         iframeElement={iframeElementRef.current!}
       />
@@ -96,7 +131,7 @@ const TourPanel = ({ steps, selectStep, addStep, iframeElement }: TourPanelProps
     iframeElement.contentWindow?.postMessage(
       {
         type: 'highlight element',
-        element: step,
+        step,
       },
       '*',
     );
@@ -139,28 +174,24 @@ const StepDetailPanel = ({
   saveChanges,
   iframeElement,
 }: StepDetailPanelProps) => {
+  const [isShowDomHierarChy, setIsShowDomHierarchy] = useState(false);
+
   useEffect(() => {
     const handleIframeMessages = (e: MessageEvent<any>) => {
       if (e.data.type === 'selected element') {
         delete e.data.type;
         onStepChange({
           ...step,
-          domHierarchy: e.data.domHierarchy,
+          element: e.data.element,
           url: e.data.url,
         });
-        iframeElement.contentWindow?.postMessage(
-          {
-            type: 'highlight element',
-            element: e.data,
-          },
-          '*',
-        );
       }
     };
 
     window.addEventListener('message', handleIframeMessages);
     return () => {
       iframeElement.contentWindow?.postMessage('end getting element', '*');
+      iframeElement.contentWindow?.postMessage('clean up', '*');
       window.removeEventListener('message', handleIframeMessages);
     };
   }, []);
@@ -169,16 +200,62 @@ const StepDetailPanel = ({
     iframeElement.contentWindow?.postMessage('start getting element', '*');
   };
 
+  const handlePopoverConfigChange =
+    (key: 'title' | 'description') => (value: string | number | undefined) => {
+      const defaultValues = {
+        title: 'Popover Title',
+        description: 'Popover Description',
+      };
+
+      onStepChange({
+        ...step,
+        popover: {
+          ...step.popover,
+          [key]: value || defaultValues[key],
+        },
+      });
+    };
+
   return (
     <div className='py-4 px-2 flex flex-col items-center gap-6'>
       <h2>Step {step.id}</h2>
-      <ul>
-        {step.domHierarchy.length
-          ? step.domHierarchy.map((dom, index) => {
-              return <li key={index}>{dom}</li>;
-            })
-          : 'No element selected'}
-      </ul>
+      {isShowDomHierarChy ? (
+        <>
+          <ul>
+            {step.element
+              ? step.element.split(' > ').map((dom, index) => {
+                  return <li key={index}>{dom}</li>;
+                })
+              : 'No element selected'}
+          </ul>
+          <p
+            className='text-blue-500 cursor-pointer'
+            onClick={() => setIsShowDomHierarchy(false)}
+          >
+            Hide Dom Hierarchy
+          </p>
+        </>
+      ) : (
+        <p
+          className='text-blue-500 cursor-pointer'
+          onClick={() => setIsShowDomHierarchy(true)}
+        >
+          Show Dom Hierarchy
+        </p>
+      )}
+      <Input
+        label='Popover Title'
+        placeholder='Enter popover title'
+        value={step.popover.title}
+        onChange={handlePopoverConfigChange('title')}
+      />
+      <Input
+        label='Popover Description'
+        type='textarea'
+        placeholder='Enter popover description'
+        value={step.popover.description}
+        onChange={handlePopoverConfigChange('description')}
+      />
       <Button
         onClick={handleChangeElement}
         _type='secondary'

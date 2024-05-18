@@ -1,6 +1,8 @@
 <script>
     const parent = window.parent;
-    let isGettingElement = false;
+    const driver = window.driver.js.driver;
+    const driverInstance = driver();
+
 
     function getIndex(child) {
         const parentElementWhichSameTypes = Array.from(child.parentElement.children).filter((el) => el.tagName === child.tagName);
@@ -25,96 +27,70 @@
         return result.map(e => e.toLowerCase()).reverse();
     }
 
-    const disableClickEvent = (event) => {
-        event.target.pointerEvents = "none";
-
-        try {
-            parent.postMessage({
-                type: 'selected element',
-                domHierarchy: getDomHierarchy(event.target),
-                props: {
-                    class: event.target.className,
-                    id: event.target.id,
-                }
-            }, '*')
+    const selectElementToHighlight = (event) => {
+        if (event.button === 2) {
+            try {
+                parent.postMessage({
+                    type: 'selected element',
+                    element: getDomHierarchy(event.target).join(" > "),
+                    url: window.location.href,
+                    props: {
+                        class: event.target.className,
+                        id: event.target.id,
+                    }
+                }, '*')
+            }
+            catch (error) {
+                console.log("parent.postMessage error", error)
+            }
         }
-        catch (error) {
-            console.log("parent.postMessage error", error)
-        }
-
-        setTimeout(() => {
-            window.dispatchEvent(new Event('release-pointer-events'));
-        }, 500);
     }
 
     function preventClickEvent() {
         const scrollable = document.body;
-        scrollable.addEventListener('mousedown', disableClickEvent, false);
-
-        window.addEventListener('release-pointer-events', function () {
-            scrollable.style.pointerEvents = "all";
-        })
+        scrollable.addEventListener('mousedown', selectElementToHighlight, false);
+        window.addEventListener("contextmenu", e => e.preventDefault());
     }
 
     function releaseClickEvent() {
         const scrollable = document.body;
-        scrollable.removeEventListener('mousedown', disableClickEvent, false);
-        window.removeEventListener('release-pointer-events', function () {
-            scrollable.style.pointerEvents = "all";
-        })
+        scrollable.removeEventListener('mousedown', selectElementToHighlight, false);
+        window.removeEventListener("contextmenu", e => e.preventDefault());
     }
 
-    function hightlightELement(el) {
-        const existedElement = document.getElementById('highlighted-element');
-        if (existedElement) {
-            existedElement.remove();
-        }
+    function highlightELement(step) {
+        const { element, popover } = step;
+        const elementInstance = document.querySelector(element);
 
-        if (isGettingElement && el) {
-            el.style.position = 'relative';
-            const newEl = document.createElement('div');
-            newEl.id = 'highlighted-element';
-            newEl.style.position = 'absolute';
-            newEl.style.top = `0`;
-            newEl.style.left = `0`;
-            newEl.style.width = `100%`;
-            newEl.style.height = `100%`;
-            newEl.style.border = '2px solid red';
-            newEl.style.zIndex = '999999';
-            newEl.style.transform = 'scale(1.05)';
-            el.appendChild(newEl);
-
-            el.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center',
-                inline: 'center'
-            });
+        if (elementInstance) {
+            driverInstance.highlight({
+                element,
+                popover
+            })
         }
     }
 
     window.addEventListener('message', function (e) {
         if (event.data === "start getting element") {
-            isGettingElement = true;
-            preventClickEvent()
+            preventClickEvent();
+            driverInstance.destroy();
         }
 
         if (event.data === "end getting element") {
-            isGettingElement = false;
             releaseClickEvent()
         }
 
         if (event.data === 'clean up') {
-            console.log('clean up')
-            isGettingElement = false;
-            hightlightELement(null);
+            driverInstance.destroy();
         }
 
         if (event.data.type === 'highlight element') {
-            isGettingElement = true;
-            const selectedElement = event.data.element;
-            const { domHierarchy } = selectedElement;
-            const element = document.querySelector(domHierarchy.join(' > '));
-            hightlightELement(element);
+            const { step } = event.data;
+            const { url, ...restStep } = step;
+            if (window.location.href !== url) {
+                return;
+            }
+            highlightELement(restStep);
         }
     })
 </script>
