@@ -137,6 +137,16 @@ const TourPanel = ({ steps, selectStep, addStep, iframeElement }: TourPanelProps
     );
   };
 
+  const handlePreviewTour = () => {
+    iframeElement.contentWindow?.postMessage(
+      {
+        type: 'preview tour',
+        steps,
+      },
+      '*',
+    );
+  };
+
   return (
     <div className='py-4 px-2 flex flex-col items-center gap-6'>
       <div className='w-full flex flex-row justify-between items-center'>
@@ -164,6 +174,12 @@ const TourPanel = ({ steps, selectStep, addStep, iframeElement }: TourPanelProps
           );
         })}
       </div>
+      <Button
+        className='w-full'
+        onClick={handlePreviewTour}
+      >
+        Preview Tour
+      </Button>
     </div>
   );
 };

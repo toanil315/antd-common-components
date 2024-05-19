@@ -48,12 +48,14 @@
 
     function preventClickEvent() {
         const scrollable = document.body;
+        scrollable.style.cursor = 'grab';
         scrollable.addEventListener('mousedown', selectElementToHighlight, false);
         window.addEventListener("contextmenu", e => e.preventDefault());
     }
 
     function releaseClickEvent() {
         const scrollable = document.body;
+        scrollable.style.cursor = 'default';
         scrollable.removeEventListener('mousedown', selectElementToHighlight, false);
         window.removeEventListener("contextmenu", e => e.preventDefault());
     }
@@ -91,6 +93,14 @@
                 return;
             }
             highlightELement(restStep);
+        }
+
+        if (event.data.type === 'preview tour') {
+            const { steps } = event.data;
+            driverInstance.destroy();
+            console.log(driverInstance)
+            driverInstance.setConfig({ steps });
+            driverInstance.drive();
         }
     })
 </script>
