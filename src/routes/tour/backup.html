@@ -3,41 +3,49 @@
     const driver = window.driver.js.driver;
     const driverInstance = driver();
 
+    const MESSAGES = {
+        START_GETTING_ELEMENT: 'start getting element',
+        END_GETTING_ELEMENT: 'end getting element',
+        CLEAN_UP: 'clean up',
+        HIGHLIGHT_ELEMENT: 'highlight element',
+        PREVIEW_TOUR: 'preview tour',
+        SELECT_ELEMENT: 'select element',
+        HANDSHAKE: 'handshake',
+        CONNECTION_ESTABLISHED: 'connection established',
+        ON_LOADED: 'on loaded',
+    }
 
-    function getIndex(child) {
+
+    function getElementIndex(child) {
         const parentElementWhichSameTypes = Array.from(child.parentElement.children).filter((el) => el.tagName === child.tagName);
         if (parentElementWhichSameTypes.length === 1) return -1;
         return [].indexOf.call(parentElementWhichSameTypes, child) + 1;
     }
 
+    const indexElementStr = (index) => {
+        if (index === -1) return '';
+        return `:nth-child(${index})`;
+    }
+
     function getDomHierarchy(e) {
         const result = [];
-        const indexOfElement = getIndex(e);
-        result.push(e.tagName + (indexOfElement === -1 ? '' : `:nth-child(${indexOfElement})`));
+        const indexOfElement = getElementIndex(e);
+        result.push(e.tagName + indexElementStr(indexOfElement));
         while (e?.parentNode.tagName !== 'HTML') {
-            const nthChild = getIndex(e?.parentNode);
-            if (nthChild === -1) {
-                result.push(e?.parentNode.tagName);
-            }
-            else {
-                result.push(e?.parentNode.tagName + `:nth-child(${nthChild})`);
-            }
+            const nthChild = getElementIndex(e?.parentNode);
+            result.push(e?.parentNode.tagName + indexElementStr(nthChild));
             e = e?.parentNode;
         }
-        return result.map(e => e.toLowerCase()).reverse();
+        return result.map(e => e.toLowerCase()).reverse().join(' > ');
     }
 
     const selectElementToHighlight = (event) => {
-        if (event.button === 2) {
+        if (event.button === 2) { // right click
             try {
                 parent.postMessage({
-                    type: 'selected element',
-                    element: getDomHierarchy(event.target).join(" > "),
+                    type: MESSAGES.SELECT_ELEMENT,
+                    element: getDomHierarchy(event.target),
                     url: window.location.href,
-                    props: {
-                        class: event.target.className,
-                        id: event.target.id,
-                    }
                 }, '*')
             }
             catch (error) {
@@ -46,22 +54,27 @@
         }
     }
 
-    function preventClickEvent() {
+    function enableSelectElement() {
         const scrollable = document.body;
         scrollable.style.cursor = 'grab';
         scrollable.addEventListener('mousedown', selectElementToHighlight, false);
         window.addEventListener("contextmenu", e => e.preventDefault());
     }
 
-    function releaseClickEvent() {
+    function disableSelectElement() {
         const scrollable = document.body;
         scrollable.style.cursor = 'default';
         scrollable.removeEventListener('mousedown', selectElementToHighlight, false);
         window.removeEventListener("contextmenu", e => e.preventDefault());
     }
 
-    function highlightELement(step) {
-        const { element, popover } = step;
+    function highlightELement(event) {
+        const { step } = event.data;
+        const { url, ...restStep } = step;
+        if (window.location.href !== url) {
+            return;
+        }
+        const { element, popover } = restStep;
         const elementInstance = document.querySelector(element);
 
         if (elementInstance) {
@@ -72,35 +85,57 @@
         }
     }
 
-    window.addEventListener('message', function (e) {
-        if (event.data === "start getting element") {
-            preventClickEvent();
-            driverInstance.destroy();
+    function previewTour(event) {
+        const { steps } = event.data;
+        driverInstance.destroy();
+        driverInstance.setConfig({ steps });
+        driverInstance.drive();
+    }
+
+    function eventHandler(event) {
+        switch (event.data.type) {
+            case MESSAGES.START_GETTING_ELEMENT:
+                enableSelectElement();
+                driverInstance.destroy();
+                break;
+            case MESSAGES.END_GETTING_ELEMENT:
+                disableSelectElement();
+                break;
+            case MESSAGES.HIGHLIGHT_ELEMENT:
+                highlightELement(event);
+                break;
+            case MESSAGES.PREVIEW_TOUR:
+                previewTour(event);
+                break;
+            case MESSAGES.CLEAN_UP:
+                driverInstance.destroy();
+                break;
+            default:
+                break;
+        }
+    }
+
+    async function initConnection() {
+        window.onload = () => {
+            parent.postMessage({ type: MESSAGES.ON_LOADED }, "*")
         }
 
-        if (event.data === "end getting element") {
-            releaseClickEvent()
-        }
+        const parentUrl = await new Promise(resolve => {
+            window.addEventListener('message', function (e) {
+                if (e.data.type === MESSAGES.HANDSHAKE) {
+                    parent.postMessage({ type: MESSAGES.CONNECTION_ESTABLISHED }, "*")
+                    resolve(e.data.parentUrl);
+                }
+            })
+        })
 
-        if (event.data === 'clean up') {
-            driverInstance.destroy();
+        if (parentUrl) {
+            window.addEventListener('message', function (e) {
+                if (e.origin !== parentUrl) return;
+                eventHandler(e);
+            });
         }
+    }
 
-        if (event.data.type === 'highlight element') {
-            const { step } = event.data;
-            const { url, ...restStep } = step;
-            if (window.location.href !== url) {
-                return;
-            }
-            highlightELement(restStep);
-        }
-
-        if (event.data.type === 'preview tour') {
-            const { steps } = event.data;
-            driverInstance.destroy();
-            console.log(driverInstance)
-            driverInstance.setConfig({ steps });
-            driverInstance.drive();
-        }
-    })
+    initConnection();
 </script>

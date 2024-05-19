@@ -62,13 +62,13 @@ function WebTourCreator() {
       });
       await mutateAsync({ ...data?.data, steps: newSteps });
     }
-    iframeElementRef.current?.contentWindow?.postMessage('end getting element', '*');
-    iframeElementRef.current?.contentWindow?.postMessage('clean up', '*');
+    iframeElementRef.current?.contentWindow?.postMessage({ type: 'end getting element' }, '*');
+    iframeElementRef.current?.contentWindow?.postMessage({ type: 'clean up' }, '*');
     setSelectedStep(null);
   };
 
   const handleAddStep = async () => {
-    iframeElementRef.current?.contentWindow?.postMessage('clean up', '*');
+    iframeElementRef.current?.contentWindow?.postMessage({ type: 'clean up' }, '*');
     const newStep = {
       id: String(Date.now()),
       element: '',
@@ -91,6 +91,17 @@ function WebTourCreator() {
       );
     }
   };
+
+  useEffect(() => {
+    window.addEventListener('message', (e) => {
+      if (e.data.type === 'on loaded') {
+        iframeElementRef.current?.contentWindow?.postMessage(
+          { type: 'handshake', parentUrl: window.location.origin },
+          '*',
+        );
+      }
+    });
+  }, []);
 
   const renderPanel = () => {
     if (!selectedStep) {
@@ -194,7 +205,7 @@ const StepDetailPanel = ({
 
   useEffect(() => {
     const handleIframeMessages = (e: MessageEvent<any>) => {
-      if (e.data.type === 'selected element') {
+      if (e.data.type === 'select element') {
         delete e.data.type;
         onStepChange({
           ...step,
@@ -206,14 +217,14 @@ const StepDetailPanel = ({
 
     window.addEventListener('message', handleIframeMessages);
     return () => {
-      iframeElement.contentWindow?.postMessage('end getting element', '*');
-      iframeElement.contentWindow?.postMessage('clean up', '*');
+      iframeElement.contentWindow?.postMessage({ type: 'end getting element' }, '*');
+      iframeElement.contentWindow?.postMessage({ type: 'clean up' }, '*');
       window.removeEventListener('message', handleIframeMessages);
     };
   }, []);
 
   const handleChangeElement = () => {
-    iframeElement.contentWindow?.postMessage('start getting element', '*');
+    iframeElement.contentWindow?.postMessage({ type: 'start getting element' }, '*');
   };
 
   const handlePopoverConfigChange =
