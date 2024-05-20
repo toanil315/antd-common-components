@@ -41,6 +41,22 @@
         return result.map(e => e.toLowerCase()).reverse().join(' > ');
     }
 
+    function getDomHierarchyWithTagNameOnly(htmlString) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, 'text/html');
+
+        function getDomHierarchy(node) {
+            let result = `<${node.tagName.toLowerCase()}/>`;
+            for (const child of node.children) {
+                result += getDomHierarchy(child);
+            }
+            return result;
+        }
+
+        const domHierarchy = getDomHierarchy(doc.body);
+        return domHierarchy.replace("<body/>", "");
+    }
+
     const selectElementToHighlight = (event) => {
         if (event.button === 2) { // right click
             try {
@@ -94,6 +110,26 @@
         toolDriverInstance.drive();
     }
 
+    function overrideWindowHistoryStateMethods() {
+        const { pushState, replaceState } = window.history;
+
+        window.history.pushState = function (...args) {
+            pushState.apply(window.history, args);
+            window.dispatchEvent(new Event('pushState'));
+        };
+
+        window.history.replaceState = function (...args) {
+            replaceState.apply(window.history, args);
+            window.dispatchEvent(new Event('replaceState'));
+        };
+    }
+
+    function watchHistoryEvents() {
+        window.addEventListener('popstate', showUnfinishedStep);
+        window.addEventListener('replaceState', showUnfinishedStep);
+        window.addEventListener('pushState', showUnfinishedStep);
+    }
+
     function eventHandler(event) {
         switch (event.data.type) {
             case MESSAGES.START_GETTING_ELEMENT:
@@ -118,44 +154,29 @@
     }
 
     async function initConnection() {
-        window.onload = () => {
-            parent.postMessage({ type: MESSAGES.ON_LOADED }, "*")
-        }
+        window.onload = async () => {
+            parent.postMessage({ type: MESSAGES.ON_LOADED }, "*");
 
-        const parentUrl = await new Promise(resolve => {
-            window.addEventListener('message', function (e) {
-                if (e.data.type === MESSAGES.HANDSHAKE) {
-                    parent.postMessage({ type: MESSAGES.CONNECTION_ESTABLISHED }, "*")
-                    resolve(e.data.parentUrl);
-                }
+            const parentUrl = await new Promise(resolve => {
+                window.addEventListener('message', function (e) {
+                    if (e.data.type === MESSAGES.HANDSHAKE) {
+                        parent.postMessage({ type: MESSAGES.CONNECTION_ESTABLISHED }, "*")
+                        resolve(e.data.parentUrl);
+                    }
+                })
             })
-        })
 
-        if (parentUrl) {
-            window.addEventListener('message', function (e) {
-                if (e.origin !== parentUrl) return;
-                eventHandler(e);
-            });
+            if (parentUrl) {
+                overrideWindowHistoryStateMethods();
+                watchHistoryEvents();
+
+                window.addEventListener('message', function (e) {
+                    if (e.origin !== parentUrl) return;
+                    eventHandler(e);
+                });
+            }
         }
-    }
-
-    async function setupTour() {
-        const data = await fetch("http://localhost:3000/tours/1715921934496");
-        if (data.ok) {
-            const tour = await data.json();
-            webDriverInstance.setConfig({ steps: tour.steps });
-        }
-        window.addEventListener(MESSAGES.SHOW_TOUR, function () {
-            webDriverInstance.drive();
-        })
-
-
-        setTimeout(() => {
-            window.dispatchEvent(new CustomEvent(MESSAGES.SHOW_TOUR));
-
-        }, 5000)
     }
 
     initConnection();
-    setupTour();
 </script>

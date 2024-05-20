@@ -11,6 +11,7 @@ interface Popover {
   title?: string;
   description?: string;
   detailLink?: string;
+  videoUrl?: string;
   side?: 'top' | 'right' | 'bottom' | 'left';
   align?: 'start' | 'center' | 'end';
   showButtons?: ('next' | 'previous' | 'close')[];
@@ -46,6 +47,7 @@ interface StepDetailPanelProps {
 
 function WebTourCreator() {
   const [selectedStep, setSelectedStep] = useState<Step | null>(null);
+  const [isSettingUpFinished, setIsSettingUpFinished] = useState(false);
   const iframeElementRef = useRef<HTMLIFrameElement | null>(null);
   const { data } = useTour();
   const { mutateAsync } = useSaveTour();
@@ -100,6 +102,9 @@ function WebTourCreator() {
           '*',
         );
       }
+      if (e.data.type === 'connection established') {
+        setIsSettingUpFinished(true);
+      }
     });
   }, []);
 
@@ -127,12 +132,19 @@ function WebTourCreator() {
 
   return (
     <div className='flex flex-row'>
-      <iframe
-        className='flex-grow h-screen'
-        src='http://localhost:5000'
-        ref={iframeElementRef}
-      />
-      <div className='w-[300px]'>{renderPanel()}</div>
+      <div className='flex-grow h-screen relative'>
+        {!isSettingUpFinished && (
+          <div className='absolute top-0 left-0 w-full h-full bg-white opacity-80 flex justify-center items-center'>
+            We are setting up the tour creator. Please wait...
+          </div>
+        )}
+        <iframe
+          className='w-full h-full'
+          src='http://localhost:5000'
+          ref={iframeElementRef}
+        />
+      </div>
+      <div className='w-[300px] h-screen overflow-y-auto'>{renderPanel()}</div>
     </div>
   );
 }
@@ -188,6 +200,7 @@ const TourPanel = ({ steps, selectStep, addStep, iframeElement }: TourPanelProps
       <Button
         className='w-full'
         onClick={handlePreviewTour}
+        disabled={steps.length === 0}
       >
         Preview Tour
       </Button>
@@ -202,6 +215,7 @@ const StepDetailPanel = ({
   iframeElement,
 }: StepDetailPanelProps) => {
   const [isShowDomHierarChy, setIsShowDomHierarchy] = useState(false);
+  const [isGettingElement, setIsGettingElement] = useState(false);
 
   useEffect(() => {
     const handleIframeMessages = (e: MessageEvent<any>) => {
@@ -224,85 +238,134 @@ const StepDetailPanel = ({
   }, []);
 
   const handleChangeElement = () => {
+    setIsGettingElement(true);
     iframeElement.contentWindow?.postMessage({ type: 'start getting element' }, '*');
   };
 
-  const handlePopoverConfigChange =
-    (key: 'title' | 'description') => (value: string | number | undefined) => {
-      const defaultValues = {
-        title: 'Popover Title',
-        description: 'Popover Description',
-      };
+  const handleCancelChangeElement = () => {
+    setIsGettingElement(false);
+    iframeElement.contentWindow?.postMessage({ type: 'end getting element' }, '*');
+  };
 
-      onStepChange({
-        ...step,
-        popover: {
-          ...step.popover,
-          [key]: value || defaultValues[key],
-        },
-      });
+  const handlePopoverConfigChange = (key: string) => (value: string | number | undefined) => {
+    const defaultValues = {
+      title: 'Popover Title',
+      description: 'Popover Description',
     };
+    let defaultValue = undefined;
+
+    if (key === 'title' || key === 'description') {
+      defaultValue = defaultValues[key];
+    }
+
+    onStepChange({
+      ...step,
+      popover: {
+        ...step.popover,
+        [key]: value || defaultValue,
+      },
+    });
+  };
+
+  const handlePreviewElement = () => {
+    iframeElement.contentWindow?.postMessage(
+      {
+        type: 'highlight element',
+        step,
+      },
+      '*',
+    );
+  };
 
   return (
-    <div className='py-4 px-2 flex flex-col items-center gap-6'>
-      <h2>Step {step.id}</h2>
-      {isShowDomHierarChy ? (
-        <>
-          <ul>
-            {step.element
-              ? step.element.split(' > ').map((dom, index) => {
-                  return <li key={index}>{dom}</li>;
-                })
-              : 'No element selected'}
-          </ul>
+    <div className='py-4 px-2 flex flex-col justify-between min-h-screen gap-10'>
+      <div className='flex flex-col items-center gap-6'>
+        <h2>Step {step.id}</h2>
+        {isShowDomHierarChy ? (
+          <>
+            <ul>
+              {step.element
+                ? step.element.split(' > ').map((dom, index) => {
+                    return <li key={index}>{dom}</li>;
+                  })
+                : 'No element selected'}
+            </ul>
+            <p
+              className='text-blue-500 cursor-pointer'
+              onClick={() => setIsShowDomHierarchy(false)}
+            >
+              Hide Dom Hierarchy
+            </p>
+          </>
+        ) : (
           <p
             className='text-blue-500 cursor-pointer'
-            onClick={() => setIsShowDomHierarchy(false)}
+            onClick={() => setIsShowDomHierarchy(true)}
           >
-            Hide Dom Hierarchy
+            Show Dom Hierarchy
           </p>
-        </>
-      ) : (
-        <p
-          className='text-blue-500 cursor-pointer'
-          onClick={() => setIsShowDomHierarchy(true)}
+        )}
+        {isGettingElement && (
+          <div className='text-xs font-medium text-center p-2 rounded-md bg-gray-100 leading-5'>
+            You are in selecting element mode. Right click on the element you want to select
+          </div>
+        )}
+        <Button
+          onClick={isGettingElement ? handleCancelChangeElement : handleChangeElement}
+          _type='secondary'
+          className='w-full'
         >
-          Show Dom Hierarchy
-        </p>
-      )}
-      <Input
-        label='Popover Title'
-        placeholder='Enter popover title'
-        value={step.popover.title}
-        onChange={handlePopoverConfigChange('title')}
-      />
-      <Input
-        label='Popover Description'
-        type='textarea'
-        placeholder='Enter popover description'
-        value={step.popover.description}
-        onChange={handlePopoverConfigChange('description')}
-      />
-      <Button
-        onClick={handleChangeElement}
-        _type='secondary'
-        className='w-full'
-      >
-        Change Element
-      </Button>
-      <Button
-        className='w-full'
-        onClick={saveChanges}
-      >
-        Save Changes
-      </Button>
-      <Button
-        onClick={() => onStepChange(null)}
-        _type='tertiary'
-        className='w-full'
-      >
-        Back
-      </Button>
+          {isGettingElement ? 'Save' : 'Select Element'}
+        </Button>
+        <Button
+          onClick={handlePreviewElement}
+          _type='secondary'
+          className='w-full'
+        >
+          Highlight Selected Element
+        </Button>
+        <h2>Popover Config</h2>
+        <Input
+          label='Popover Title'
+          placeholder='Enter popover title'
+          value={step.popover.title}
+          onChange={handlePopoverConfigChange('title')}
+        />
+        <Input
+          label='Popover Description'
+          type='textarea'
+          placeholder='Enter popover description'
+          value={step.popover.description}
+          onChange={handlePopoverConfigChange('description')}
+        />
+        <Input
+          label='Detail Link'
+          placeholder='Enter popover detail link'
+          value={step.popover.detailLink}
+          onChange={handlePopoverConfigChange('detailLink')}
+        />
+        <Input
+          label='Video Link'
+          placeholder='Enter popover video link'
+          value={step.popover.videoUrl}
+          onChange={handlePopoverConfigChange('videoUrl')}
+        />
+      </div>
+      <div className='flex flex-col items-center gap-6'>
+        <Button
+          className='w-full mt-4'
+          onClick={saveChanges}
+        >
+          Save Changes
+        </Button>
+        <Button
+          onClick={() => onStepChange(null)}
+          _type='tertiary'
+          className='w-full'
+        >
+          Back
+        </Button>
+      </div>
     </div>
   );
 };
