@@ -1,7 +1,8 @@
 <script>
     const parent = window.parent;
     const driver = window.driver.js.driver;
-    const driverInstance = driver();
+    const toolDriverInstance = driver();
+    const webDriverInstance = driver();
 
     const MESSAGES = {
         START_GETTING_ELEMENT: 'start getting element',
@@ -13,6 +14,7 @@
         HANDSHAKE: 'handshake',
         CONNECTION_ESTABLISHED: 'connection established',
         ON_LOADED: 'on loaded',
+        SHOW_TOUR: 'show tour',
     }
 
 
@@ -78,7 +80,7 @@
         const elementInstance = document.querySelector(element);
 
         if (elementInstance) {
-            driverInstance.highlight({
+            toolDriverInstance.highlight({
                 element,
                 popover
             })
@@ -87,16 +89,16 @@
 
     function previewTour(event) {
         const { steps } = event.data;
-        driverInstance.destroy();
-        driverInstance.setConfig({ steps });
-        driverInstance.drive();
+        toolDriverInstance.destroy();
+        toolDriverInstance.setConfig({ steps });
+        toolDriverInstance.drive();
     }
 
     function eventHandler(event) {
         switch (event.data.type) {
             case MESSAGES.START_GETTING_ELEMENT:
                 enableSelectElement();
-                driverInstance.destroy();
+                toolDriverInstance.destroy();
                 break;
             case MESSAGES.END_GETTING_ELEMENT:
                 disableSelectElement();
@@ -108,7 +110,7 @@
                 previewTour(event);
                 break;
             case MESSAGES.CLEAN_UP:
-                driverInstance.destroy();
+                toolDriverInstance.destroy();
                 break;
             default:
                 break;
@@ -137,5 +139,23 @@
         }
     }
 
+    async function setupTour() {
+        const data = await fetch("http://localhost:3000/tours/1715921934496");
+        if (data.ok) {
+            const tour = await data.json();
+            webDriverInstance.setConfig({ steps: tour.steps });
+        }
+        window.addEventListener(MESSAGES.SHOW_TOUR, function () {
+            webDriverInstance.drive();
+        })
+
+
+        setTimeout(() => {
+            window.dispatchEvent(new CustomEvent(MESSAGES.SHOW_TOUR));
+
+        }, 5000)
+    }
+
     initConnection();
+    setupTour();
 </script>
