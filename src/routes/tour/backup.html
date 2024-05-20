@@ -72,18 +72,22 @@
         }
     }
 
+    function preventContextMenu(e) {
+        e.preventDefault();
+    }
+
     function enableSelectElement() {
         const scrollable = document.body;
         scrollable.style.cursor = 'grab';
         scrollable.addEventListener('mousedown', selectElementToHighlight, false);
-        window.addEventListener("contextmenu", e => e.preventDefault());
+        window.addEventListener("contextmenu", preventContextMenu);
     }
 
     function disableSelectElement() {
         const scrollable = document.body;
         scrollable.style.cursor = 'default';
         scrollable.removeEventListener('mousedown', selectElementToHighlight, false);
-        window.removeEventListener("contextmenu", e => e.preventDefault());
+        window.removeEventListener("contextmenu", preventContextMenu);
     }
 
     function highlightELement(event) {
@@ -125,9 +129,9 @@
     }
 
     function watchHistoryEvents() {
-        window.addEventListener('popstate', showUnfinishedStep);
-        window.addEventListener('replaceState', showUnfinishedStep);
-        window.addEventListener('pushState', showUnfinishedStep);
+        window.addEventListener('popstate', (e) => console.log(e));
+        window.addEventListener('replaceState', (e) => console.log(e));
+        window.addEventListener('pushState', (e) => console.log(e));
     }
 
     function eventHandler(event) {

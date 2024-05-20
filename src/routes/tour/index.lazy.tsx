@@ -77,7 +77,6 @@ function WebTourCreator() {
       url: '',
       popover: { title: 'Popover Title', description: 'Popover Description' },
     };
-    await mutateAsync({ ...data?.data, steps: [...steps, newStep] });
     setSelectedStep(newStep);
   };
 
