@@ -31,8 +31,17 @@ interface Step {
   popover: Popover;
 }
 
-interface TourPanelProps {
+interface Tour {
+  id: string;
+  name: string;
+  description: string;
   steps: Step[];
+  url: string;
+  nextTourId?: string;
+}
+
+interface TourPanelProps {
+  tour: Tour;
   selectStep: (step: Step) => void;
   addStep: () => void;
   iframeElement: HTMLIFrameElement;
@@ -51,18 +60,24 @@ function WebTourCreator() {
   const iframeElementRef = useRef<HTMLIFrameElement | null>(null);
   const { data } = useTour();
   const { mutateAsync } = useSaveTour();
-  const { steps } = data?.data || { steps: [] };
+  const tour = data?.data as Tour;
 
   const saveChanges = async () => {
     if (selectedStep) {
-      const newSteps = steps.map((prevStep: Step) => {
-        if (prevStep.id === selectedStep.id) {
-          return selectedStep;
-        }
+      const stepIndex = tour.steps.findIndex((step) => step.id === selectedStep.id);
+      if (stepIndex === -1) {
+        tour.steps.push(selectedStep);
+      } else {
+        tour.steps = tour.steps.map((prevStep: Step) => {
+          if (prevStep.id === selectedStep.id) {
+            return selectedStep;
+          }
 
-        return prevStep;
-      });
-      await mutateAsync({ ...data?.data, steps: newSteps });
+          return prevStep;
+        });
+      }
+
+      await mutateAsync(tour);
     }
     iframeElementRef.current?.contentWindow?.postMessage({ type: 'end getting element' }, '*');
     iframeElementRef.current?.contentWindow?.postMessage({ type: 'clean up' }, '*');
@@ -108,10 +123,10 @@ function WebTourCreator() {
   }, []);
 
   const renderPanel = () => {
-    if (!selectedStep) {
+    if (!selectedStep && tour) {
       return (
         <TourPanel
-          steps={steps}
+          tour={tour}
           selectStep={setSelectedStep}
           iframeElement={iframeElementRef.current!}
           addStep={handleAddStep}
@@ -119,14 +134,18 @@ function WebTourCreator() {
       );
     }
 
-    return (
-      <StepDetailPanel
-        step={selectedStep}
-        onStepChange={handleStepChange}
-        saveChanges={saveChanges}
-        iframeElement={iframeElementRef.current!}
-      />
-    );
+    if (selectedStep) {
+      return (
+        <StepDetailPanel
+          step={selectedStep}
+          onStepChange={handleStepChange}
+          saveChanges={saveChanges}
+          iframeElement={iframeElementRef.current!}
+        />
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -148,7 +167,9 @@ function WebTourCreator() {
   );
 }
 
-const TourPanel = ({ steps, selectStep, addStep, iframeElement }: TourPanelProps) => {
+const TourPanel = ({ tour, selectStep, addStep, iframeElement }: TourPanelProps) => {
+  const steps = tour.steps || [];
+
   const handlePreviewStep = (step: Step) => {
     iframeElement.contentWindow?.postMessage(
       {
@@ -171,6 +192,31 @@ const TourPanel = ({ steps, selectStep, addStep, iframeElement }: TourPanelProps
 
   return (
     <div className='py-4 px-2 flex flex-col items-center gap-6'>
+      <h2>Tour</h2>
+      <Input
+        label='Tour Name'
+        placeholder='Enter tour name'
+        value={tour.name}
+      />
+      <Input
+        label='Tour Description'
+        type='textarea'
+        placeholder='Enter tour description'
+        value={tour.description}
+      />
+      <Input
+        label='Website url'
+        placeholder='enter website url to start tour'
+        value={tour.url}
+      />
+      <Button
+        className='w-full'
+        onClick={handlePreviewTour}
+        disabled={steps.length === 0}
+      >
+        Preview Tour
+      </Button>
+      <div className='my-2' />
       <div className='w-full flex flex-row justify-between items-center'>
         <h2>Steps</h2>
         <Button onClick={addStep}>
@@ -196,13 +242,6 @@ const TourPanel = ({ steps, selectStep, addStep, iframeElement }: TourPanelProps
           );
         })}
       </div>
-      <Button
-        className='w-full'
-        onClick={handlePreviewTour}
-        disabled={steps.length === 0}
-      >
-        Preview Tour
-      </Button>
     </div>
   );
 };
