@@ -189,43 +189,43 @@
 
   async function initTourListener() {
     try {
-      const data = await fetch('http://localhost:3000/tours');
-      if (data.ok) {
+      window.addEventListener('start tour', async function (e) {
+        const data = await fetch('http://localhost:3000/tours');
+        if (!data.ok) return;
+
         const tours = await data.json();
-
-        window.addEventListener('start tour', function (e) {
-          const { tourId } = e.detail;
-          const tour = tours.find((tour) => tour.id === tourId);
-          if (!tour.nextTourId) {
-            webDriverInstance.setConfig({ steps: tour.steps });
-            webDriverInstance.drive();
-          } else {
-            const nextTour = tours.find((t) => t.id === tour.nextTourId);
-            localStorage.setItem('unfinishedTour', JSON.stringify(nextTour));
-            const finalStep = {
-              element: null,
-              popover: {
-                title: `Next part is ${nextTour.name}`,
-                description: nextTour.description,
-                disableButtons: ['previous'],
-                doneBtnText: `<a href="${nextTour.url}">Ok, let's go</a>`,
-              },
-            };
-            webDriverInstance.setConfig({ steps: [...tour.steps, finalStep] });
-            webDriverInstance.drive();
-          }
-        });
-
-        const unfinishedTourStr = localStorage.getItem('unfinishedTour');
-        if (unfinishedTourStr) {
-          const unfinishedTour = JSON.parse(unfinishedTourStr);
-          window.dispatchEvent(
-            new CustomEvent('start tour', { detail: { tourId: unfinishedTour.id } }),
-          );
-          localStorage.removeItem('unfinishedTour');
+        const { tourId } = e.detail;
+        const tour = tours.find((tour) => tour.id === tourId);
+        if (!tour.nextTourId) {
+          webDriverInstance.setConfig({ steps: tour.steps });
+          webDriverInstance.drive();
+        } else {
+          const nextTour = tours.find((t) => t.id === tour.nextTourId);
+          localStorage.setItem('unfinishedTour', JSON.stringify(nextTour));
+          const finalStep = {
+            element: null,
+            popover: {
+              title: `Next part is ${nextTour.name}`,
+              description: nextTour.description,
+              disableButtons: ['previous'],
+              doneBtnText: `<a href="${nextTour.url}">Ok, let's go</a>`,
+            },
+          };
+          webDriverInstance.setConfig({ steps: [...tour.steps, finalStep] });
+          webDriverInstance.drive();
         }
+      });
+
+      const unfinishedTourStr = localStorage.getItem('unfinishedTour');
+      if (unfinishedTourStr) {
+        const unfinishedTour = JSON.parse(unfinishedTourStr);
+        localStorage.removeItem('unfinishedTour');
+        window.dispatchEvent(
+          new CustomEvent('start tour', { detail: { tourId: unfinishedTour.id } }),
+        );
       }
-    } catch (error) {
+    }
+    catch (error) {
       console.log('init tour error: ', error);
     }
   }
@@ -247,5 +247,4 @@
   }
 
   window.initTourConnection = initTourConnection;
-
 </script>
