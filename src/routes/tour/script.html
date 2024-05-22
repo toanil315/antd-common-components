@@ -26,7 +26,11 @@
     SHOW_TOUR: 'show tour',
   };
 
-  const instroductionContent = `<div class="introduction-container">
+  const firstStep = {
+    popover: {
+      showButtons: [''],
+      popoverClass: 'introduction-linked-site',
+      description: `<div class="introduction-container">
   <div class="introduction-content">
           <button class="introduction-skip-button" onClick="onClickSkip()">Skip
             <div class="introduction-arrow-icon">
@@ -59,7 +63,9 @@
               <iframe src="https://player.vimeo.com/video/894318139?h=65335b9b2f" width="640" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen />
             </div>
           </div>
-</div>`
+                </div>`,
+    }
+  }
 
   const detailDocumentTemplate = (detailLink) => {
     return `<br> <br> <a href="${detailLink}" class='introduction-btn-see-details' target='_blank'>See details documents</a>
@@ -97,12 +103,12 @@
     })
   }
 
+  function onDestroyClick() {
+    webDriverInstance.destroy();
+  }
 
   function onClickSkip() {
-    window.dispatchEvent(
-      new CustomEvent('start tour', { detail: { tourId: '1716304884273' } }),
-    );
-    introductionElement.style.display = "none";
+    webDriverInstance.moveNext();
   }
 
   function buildPopoverContent(popoverConfig) {
@@ -354,15 +360,16 @@
           webDriverInstance.setConfig({
             ...tour,
             popoverClass: "driverjs-theme",
-            steps: tour.steps.map((step) => {
-              return {
-                ...step,
-                popover: buildPopoverContent(step.popover),
-              };
-            }),
-            onPrevClick: () => {
-              webDriverInstance.destroy();
-            }
+            steps: [
+              firstStep,
+              ...tour.steps.map((step) => {
+                return {
+                  ...step,
+                  popover: buildPopoverContent(step.popover),
+                };
+              })
+            ],
+            onPrevClick: onDestroyClick
           });
           webDriverInstance.drive();
         } else {
