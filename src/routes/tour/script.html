@@ -199,31 +199,33 @@
     }
   }
 
-  function highlightElementWhenSelect(e) {
-    const boundingClientRect = e.target.getBoundingClientRect();
+  function highlightElementWhenHover(e) {
+    throttle(() => {
+      const boundingClientRect = e.target.getBoundingClientRect();
 
-    if (checkPositionIsChanged(boundingClientRect)) {
-      removeElement(highlightBoxConfigs.id)
+      if (checkPositionIsChanged(boundingClientRect)) {
+        removeElement(highlightBoxConfigs.id)
 
-      highlightBoxConfigs.boundingRect = boundingClientRect;
-      highlightBoxConfigs.target = e.target;
-      const div = document.createElement('div');
-      div.id = highlightBoxConfigs.id;
-      div.style.position = 'fixed';
-      div.style.top = `${highlightBoxConfigs.boundingRect.top}px`;
-      div.style.left = `${highlightBoxConfigs.boundingRect.left}px`;
-      div.style.width = `${highlightBoxConfigs.boundingRect.width}px`;
-      div.style.height = `${highlightBoxConfigs.boundingRect.height}px`;
-      div.style.border = '2px solid #3b82f6';
-      div.style.pointerEvents = 'none';
-      document.body.appendChild(div);
-    }
+        highlightBoxConfigs.boundingRect = boundingClientRect;
+        highlightBoxConfigs.target = e.target;
+        const div = document.createElement('div');
+        div.id = highlightBoxConfigs.id;
+        div.style.position = 'fixed';
+        div.style.top = `${highlightBoxConfigs.boundingRect.top}px`;
+        div.style.left = `${highlightBoxConfigs.boundingRect.left}px`;
+        div.style.width = `${highlightBoxConfigs.boundingRect.width}px`;
+        div.style.height = `${highlightBoxConfigs.boundingRect.height}px`;
+        div.style.border = '2px solid #3b82f6';
+        div.style.pointerEvents = 'none';
+        document.body.appendChild(div);
+      }
+    })();
   }
 
   function throttle(func, delay = 50) {
     let lastCall = 0;
     return function (...args) {
-      const now = new Date().getTime();
+      const now = Date.now();
       if (now - lastCall >= delay) {
         func(...args);
         lastCall = now;
@@ -235,7 +237,7 @@
     const scrollable = document.body;
     scrollable.style.cursor = 'grab';
     scrollable.addEventListener('mousedown', selectElementToHighlight, false);
-    scrollable.addEventListener('mouseover', throttle(highlightElementWhenSelect));
+    scrollable.addEventListener('mouseover', highlightElementWhenHover);
     window.addEventListener('contextmenu', preventContextMenu);
   }
 
@@ -244,7 +246,7 @@
     scrollable.style.cursor = 'default';
     removeElement(highlightBoxConfigs.id)
     scrollable.removeEventListener('mousedown', selectElementToHighlight, false);
-    scrollable.removeEventListener('mouseover', throttle(highlightElementWhenSelect));
+    scrollable.removeEventListener('mouseover', highlightElementWhenHover);
     window.removeEventListener('contextmenu', preventContextMenu);
   }
 
