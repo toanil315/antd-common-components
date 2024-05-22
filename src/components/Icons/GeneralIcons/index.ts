@@ -15,3 +15,5 @@ export { default as EmptyIcon } from './EmptyIcon';
 export { default as RectIcon } from './RectIcon';
 export { default as CircleIcon } from './CircleIcon';
 export { default as DiamondIcon } from './DiamondIcon';
+export { default as TooltipIcon } from './TooltipIcon';
+export { default as ModalIcon } from './ModalIcon';
