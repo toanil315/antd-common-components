@@ -8,7 +8,7 @@
     border-radius: 8px;
   }
 
-  .driver-popover.driverjs-theme.driver-popover-title {
+  .driver-popover.driverjs-theme .driver-popover-title {
     display: none !important;
   }
 

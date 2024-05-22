@@ -271,12 +271,25 @@
     }
   }
 
+  function buildFullTour(steps) {
+    return [
+      firstStep,
+      ...steps.map((step) => {
+        return {
+          ...step,
+          popover: buildPopoverContent(step.popover),
+        };
+      })
+    ]
+  }
+
   function previewTour(event) {
     const { steps } = event.data;
     toolDriverInstance.destroy();
     toolDriverInstance.setConfig({
       popoverClass: "driverjs-theme",
-      steps
+      steps: buildFullTour(steps),
+      onPrevClick: toolDriverInstance.destroy
     });
     toolDriverInstance.drive();
   }
@@ -360,15 +373,7 @@
           webDriverInstance.setConfig({
             ...tour,
             popoverClass: "driverjs-theme",
-            steps: [
-              firstStep,
-              ...tour.steps.map((step) => {
-                return {
-                  ...step,
-                  popover: buildPopoverContent(step.popover),
-                };
-              })
-            ],
+            steps: buildFullTour(tour.steps),
             onPrevClick: onDestroyClick
           });
           webDriverInstance.drive();
@@ -386,7 +391,8 @@
           };
           webDriverInstance.setConfig({
             popoverClass: "driverjs-theme",
-            steps: [...tour.steps, finalStep]
+            steps: [...tour.steps, finalStep],
+            onPrevClick: onDestroyClick
           });
           webDriverInstance.drive();
         }
