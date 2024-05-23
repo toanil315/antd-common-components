@@ -130,7 +130,7 @@ export const StyledInputNumber = styled(createStyledInput(InputNumber))`
 
 export const StyledLabel = styled.label`
   display: block;
-  font-size: ${({ theme }) => theme.fontSizes.body};
+  font-size: ${({ theme }) => theme.fontSizes.small};
   font-weight: ${({ theme }) => theme.fontWeights.bold};
   line-height: ${({ theme }) => theme.lineHeights.body};
   color: ${({ theme }) => theme.colors.black};

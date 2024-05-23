@@ -21,7 +21,7 @@ export const StyledCollapse = styled(Collapse)`
         border-radius: unset;
 
         .ant-collapse-header-text {
-          font-size: ${({ theme }) => theme.fontSizes.h5};
+          font-size: ${({ theme }) => theme.fontSizes.body};
           line-height: ${({ theme }) => theme.lineHeights.h5};
           font-weight: ${({ theme }) => theme.fontWeights.bold};
           color: ${({ theme }) => theme.colors.black};

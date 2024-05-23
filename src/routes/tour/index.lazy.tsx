@@ -1,16 +1,21 @@
 import {
+  Accordion,
   Button,
   Input,
   ModalIcon,
   OverflowMenu,
+  PencilIcon,
   PlusIcon,
   Popover,
+  Select,
   TooltipIcon,
 } from '@/components';
+import Label from '@/components/Commons/Input/Label';
 import { useSaveTour, useTour } from '@/hooks/useTour';
 import { createLazyFileRoute } from '@tanstack/react-router';
-import { Tooltip } from 'antd';
 import { useEffect, useRef, useState } from 'react';
+import { DomHierarchyItem } from './styled';
+import { Tooltip } from 'antd';
 
 export const Route = createLazyFileRoute('/tour/')({
   component: WebTourCreator,
@@ -21,7 +26,7 @@ interface Popover {
   description?: string;
   detailLink?: string;
   videoUrl?: string;
-  type: 'tooltip' | 'banner';
+  type: 'tooltip' | 'modal';
   side?: 'top' | 'right' | 'bottom' | 'left';
   align?: 'start' | 'center' | 'end';
   showButtons?: ('next' | 'previous' | 'close')[];
@@ -69,8 +74,8 @@ const POPOVER_TYPES = {
     type: 'tooltip',
     Icon: TooltipIcon,
   },
-  banner: {
-    type: 'banner',
+  modal: {
+    type: 'modal',
     Icon: ModalIcon,
   },
 };
@@ -213,7 +218,7 @@ const TourPanel = ({ tour, selectStep, addStep, iframeElement }: TourPanelProps)
 
   return (
     <div className='py-4 px-2 flex flex-col items-center gap-6'>
-      <h2>Tour</h2>
+      <h4 className='w-full'>Tour</h4>
       <Input
         label='Tour Name'
         placeholder='Enter tour name'
@@ -239,26 +244,39 @@ const TourPanel = ({ tour, selectStep, addStep, iframeElement }: TourPanelProps)
       </Button>
       <div className='my-2' />
       <div className='w-full flex flex-row justify-between items-center'>
-        <h2>Steps</h2>
-        <Button onClick={addStep}>
-          <PlusIcon stroke='white' />
+        <h4>Steps</h4>
+        <Button
+          size='small'
+          onClick={addStep}
+        >
+          <PlusIcon fill='white' />
         </Button>
       </div>
       <div className='w-full flex flex-col gap-4'>
-        {steps.map((step) => {
+        {steps.map((step, index) => {
           return (
             <div
               key={step.id}
               onClick={() => handlePreviewStep(step)}
-              className='w-full flex flex-row justify-between p-4 border border-solid rounded-md border-gray-300 cursor-pointer hover:bg-gray-100'
+              className='w-full flex flex-row items-center justify-between p-4 border border-solid rounded-md border-gray-300 cursor-pointer hover:bg-gray-100'
             >
-              <h4>Step {step.id}</h4>
-              <span
-                onClick={() => selectStep(step)}
-                className='text-sm text-blue-400 cursor-pointer'
-              >
-                View detail
-              </span>
+              <div>
+                <p className='font-bold text-base text-gray-700'>Step {index + 1}</p>
+                <span className='text-xs font-medium text-gray-400'>{step.popover.type}</span>
+              </div>
+              <div className='flex flex-row items-center gap-4'>
+                <Tooltip title='Edit step'>
+                  <span
+                    onClick={() => selectStep(step)}
+                    className='text-sm text-blue-400 cursor-pointer p-2'
+                  >
+                    <PencilIcon
+                      width={20}
+                      height={20}
+                    />
+                  </span>
+                </Tooltip>
+              </div>
             </div>
           );
         })}
@@ -267,23 +285,83 @@ const TourPanel = ({ tour, selectStep, addStep, iframeElement }: TourPanelProps)
   );
 };
 
-const StepDetailPanel = ({
-  step,
-  onStepChange,
-  saveChanges,
-  iframeElement,
-}: StepDetailPanelProps) => {
-  const [isShowDomHierarChy, setIsShowDomHierarchy] = useState(true);
-  const [isGettingElement, setIsGettingElement] = useState(false);
-  const [selectedDomIndex, setSelectedDomIndex] = useState(-1);
+const StepDetailPanel = (props: StepDetailPanelProps) => {
+  const { step, onStepChange, saveChanges } = props;
 
-  useEffect(() => {
-    if (step.element) {
-      setSelectedDomIndex(step.element.split(' > ').length - 1);
-    } else {
-      setSelectedDomIndex(-1);
-    }
-  }, [step]);
+  return (
+    <div className='py-4 flex flex-col justify-between min-h-screen gap-10'>
+      <div className='flex flex-col items-center gap-6'>
+        <div className='w-full px-2 flex flex-col items-center gap-6'>
+          <h4 className='w-full'>Step Detail</h4>
+          <Select
+            label='UI Pattern'
+            name='ui-pattern'
+            placeholder='Select UI Pattern'
+            options={Object.keys(POPOVER_TYPES).map((key) => {
+              const popoverConfig = POPOVER_TYPES[key as 'modal'];
+              return {
+                label: (
+                  <div className='flex flex-row items-center gap-3'>
+                    <popoverConfig.Icon />
+                    <span className='capitalize font-medium'>{popoverConfig.type}</span>
+                  </div>
+                ),
+                value: popoverConfig.type,
+              };
+            })}
+            value={step.popover.type}
+            onSelect={(value) => {
+              onStepChange({
+                ...step,
+                element: value === 'modal' ? null : step.element,
+                popover: { ...step.popover, type: value as 'modal' },
+              });
+            }}
+          />
+        </div>
+        <div className='w-full'>
+          <Accordion
+            items={[
+              ...(step.popover.type === 'tooltip'
+                ? [
+                    {
+                      key: 'element-selector',
+                      label: 'Element Selector',
+                      children: <ElementSelectorSection {...props} />,
+                    },
+                  ]
+                : []),
+              {
+                key: 'popover-config',
+                label: 'UI Content',
+                children: <UIContentSection {...props} />,
+              },
+            ]}
+          />
+        </div>
+      </div>
+      <div className='flex flex-col items-center gap-6'>
+        <Button
+          className='w-full mt-4'
+          onClick={saveChanges}
+        >
+          Save Changes
+        </Button>
+        <Button
+          onClick={() => onStepChange(null)}
+          _type='tertiary'
+          className='w-full'
+        >
+          Back
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+const ElementSelectorSection = (props: StepDetailPanelProps) => {
+  const { step, onStepChange, iframeElement } = props;
+  const [isGettingElement, setIsGettingElement] = useState(false);
 
   useEffect(() => {
     const handleIframeMessages = (e: MessageEvent<any>) => {
@@ -293,6 +371,7 @@ const StepDetailPanel = ({
           ...step,
           element: e.data.element,
         });
+        handleCancelChangeElement();
       }
     };
 
@@ -314,6 +393,48 @@ const StepDetailPanel = ({
     iframeElement.contentWindow?.postMessage({ type: 'end getting element' }, '*');
   };
 
+  const handlePreviewElement = () => {
+    iframeElement.contentWindow?.postMessage(
+      {
+        type: 'highlight element',
+        step,
+      },
+      '*',
+    );
+  };
+
+  return (
+    <div className='flex flex-col gap-6'>
+      <Input
+        label='Selected Element'
+        value={step.element?.split(' > ').at(-1) || 'No element selected'}
+        readOnly
+      />
+      <DomHierarchyPresenter {...props} />
+      {isGettingElement && (
+        <div className='text-xs font-medium text-center p-2 rounded-md bg-gray-100 leading-5'>
+          You are in selecting element mode. Right click on the element you want to select
+        </div>
+      )}
+      <Button
+        onClick={handleChangeElement}
+        _type='secondary'
+        className='w-full'
+      >
+        Select Element
+      </Button>
+      <Button
+        onClick={handlePreviewElement}
+        _type='secondary'
+        className='w-full'
+      >
+        Highlight Selected Element
+      </Button>
+    </div>
+  );
+};
+
+const UIContentSection = ({ step, onStepChange, iframeElement }: StepDetailPanelProps) => {
   const handlePopoverConfigChange = (key: string) => (value: string | number | undefined) => {
     const defaultValues = {
       title: 'Popover Title',
@@ -344,6 +465,60 @@ const StepDetailPanel = ({
     );
   };
 
+  return (
+    <div className='flex flex-col gap-6'>
+      <Input
+        label='Popover Title'
+        placeholder='Enter popover title'
+        value={step.popover.title}
+        onChange={handlePopoverConfigChange('title')}
+      />
+      <Input
+        label='Popover Description'
+        type='textarea'
+        placeholder='Enter popover description'
+        value={step.popover.description}
+        onChange={handlePopoverConfigChange('description')}
+      />
+      <Input
+        label='Detail Link'
+        placeholder='Enter popover detail link'
+        value={step.popover.detailLink}
+        onChange={handlePopoverConfigChange('detailLink')}
+      />
+      {step.popover.type === 'modal' && (
+        <Input
+          label='Video Link'
+          placeholder='Enter popover video link'
+          value={step.popover.videoUrl}
+          onChange={handlePopoverConfigChange('videoUrl')}
+        />
+      )}
+      {step.popover.type === 'modal' && (
+        <Button
+          onClick={handlePreviewElement}
+          _type='secondary'
+          className='w-full'
+        >
+          Highlight Selected Element
+        </Button>
+      )}
+    </div>
+  );
+};
+
+const DomHierarchyPresenter = ({ step, onStepChange, iframeElement }: StepDetailPanelProps) => {
+  const [isShowDomHierarChy, setIsShowDomHierarchy] = useState(false);
+  const [selectedDomIndex, setSelectedDomIndex] = useState(-1);
+
+  useEffect(() => {
+    if (step.element) {
+      setSelectedDomIndex(step.element.split(' > ').length - 1);
+    } else {
+      setSelectedDomIndex(-1);
+    }
+  }, [step]);
+
   const cutDomHierarchy = (index: number) => {
     if (step.element) {
       const elements = step.element.split(' > ');
@@ -370,162 +545,62 @@ const StepDetailPanel = ({
     }
   };
 
+  if (!isShowDomHierarChy) {
+    return (
+      <Button
+        _type='secondary'
+        disabled={!step.element}
+        onClick={() => setIsShowDomHierarchy(true)}
+      >
+        Show Dom Hierarchy
+      </Button>
+    );
+  }
+
   return (
-    <div className='py-4 px-2 flex flex-col justify-between min-h-screen gap-10'>
-      <div className='flex flex-col items-center gap-6'>
-        <h2>Step Detail</h2>
-        <div className='flex flex-row flex-wrap justify-center items-center gap-5'>
-          {Object.keys(POPOVER_TYPES).map((key) => {
-            const popoverConfig = POPOVER_TYPES[key as 'banner'];
-            return (
-              <Tooltip
-                key={key}
-                title={popoverConfig.type}
-              >
-                <div
-                  className={`w-10 h-10 border border-gray-300 border-solid rounded-full flex justify-center items-center cursor-pointer ${
-                    step.popover.type === popoverConfig.type ? 'border-blue-500' : ''
-                  }`}
-                  onClick={() =>
-                    onStepChange({
-                      ...step,
-                      element: popoverConfig.type === 'banner' ? null : step.element,
-                      popover: { ...step.popover, type: popoverConfig.type as 'banner' },
-                    })
-                  }
+    <>
+      <div>
+        <Label label='Dom Hierarchy:' />
+        <ul className='pl-5 list-none'>
+          {step.element &&
+            step.element.split(' > ').map((dom, index) => {
+              return (
+                <OverflowMenu
+                  key={index}
+                  trigger={['click']}
+                  menu={{
+                    items: [
+                      {
+                        label: 'Highlight this element',
+                        key: '1',
+                        onClick: () => highlightElementInDomHierarChy(index),
+                      },
+                      {
+                        label: 'Cut dom hierarchy',
+                        key: '2',
+                        onClick: () => cutDomHierarchy(index),
+                      },
+                    ],
+                  }}
                 >
-                  <popoverConfig.Icon
-                    fill={step.popover.type === popoverConfig.type ? '#3b82f6' : ''}
-                  />
-                </div>
-              </Tooltip>
-            );
-          })}
-        </div>
-        {step.popover.type === 'tooltip' && (
-          <>
-            <div className='h-[1px] w-full bg-gray-200' />
-            <h3>Element Selector</h3>
-            {isShowDomHierarChy ? (
-              <>
-                <ul>
-                  {step.element ? (
-                    step.element.split(' > ').map((dom, index) => {
-                      return (
-                        <OverflowMenu
-                          key={index}
-                          trigger={['click']}
-                          menu={{
-                            items: [
-                              {
-                                label: 'Highlight this element',
-                                key: '1',
-                                onClick: () => highlightElementInDomHierarChy(index),
-                              },
-                              {
-                                label: 'Cut dom hierarchy',
-                                key: '2',
-                                onClick: () => cutDomHierarchy(index),
-                              },
-                            ],
-                          }}
-                        >
-                          <li
-                            className={`hover:text-blue-500 cursor-pointer ${
-                              selectedDomIndex === index ? 'text-blue-500' : ''
-                            }`}
-                          >
-                            {dom}
-                          </li>
-                        </OverflowMenu>
-                      );
-                    })
-                  ) : (
-                    <p className='text-sm'>No element selected</p>
-                  )}
-                </ul>
-                <p
-                  className='text-blue-500 cursor-pointer'
-                  onClick={() => setIsShowDomHierarchy(false)}
-                >
-                  Hide Dom Hierarchy
-                </p>
-              </>
-            ) : (
-              <p
-                className='text-blue-500 cursor-pointer'
-                onClick={() => setIsShowDomHierarchy(true)}
-              >
-                Show Dom Hierarchy
-              </p>
-            )}
-            {isGettingElement && (
-              <div className='text-xs font-medium text-center p-2 rounded-md bg-gray-100 leading-5'>
-                You are in selecting element mode. Right click on the element you want to select
-              </div>
-            )}
-            <Button
-              onClick={isGettingElement ? handleCancelChangeElement : handleChangeElement}
-              _type='secondary'
-              className='w-full'
-            >
-              {isGettingElement ? 'Save' : 'Select Element'}
-            </Button>
-            <Button
-              onClick={handlePreviewElement}
-              _type='secondary'
-              className='w-full'
-            >
-              Highlight Selected Element
-            </Button>
-          </>
-        )}
-        <div className='h-[1px] w-full bg-gray-200' />
-        <h3>Popover Config</h3>
-        <Input
-          label='Popover Title'
-          placeholder='Enter popover title'
-          value={step.popover.title}
-          onChange={handlePopoverConfigChange('title')}
-        />
-        <Input
-          label='Popover Description'
-          type='textarea'
-          placeholder='Enter popover description'
-          value={step.popover.description}
-          onChange={handlePopoverConfigChange('description')}
-        />
-        <Input
-          label='Detail Link'
-          placeholder='Enter popover detail link'
-          value={step.popover.detailLink}
-          onChange={handlePopoverConfigChange('detailLink')}
-        />
-        {step.popover.type === 'banner' && (
-          <Input
-            label='Video Link'
-            placeholder='Enter popover video link'
-            value={step.popover.videoUrl}
-            onChange={handlePopoverConfigChange('videoUrl')}
-          />
-        )}
-        <div className='h-[1px] w-full bg-gray-200' />
+                  <DomHierarchyItem
+                    className={`hover:text-gray-700 cursor-pointer ${
+                      selectedDomIndex === index ? 'text-blue-500' : ''
+                    }`}
+                  >
+                    {dom}
+                  </DomHierarchyItem>
+                </OverflowMenu>
+              );
+            })}
+        </ul>
       </div>
-      <div className='flex flex-col items-center gap-6'>
-        <Button
-          className='w-full mt-4'
-          onClick={saveChanges}
-        >
-          Save Changes
-        </Button>
-        <Button
-          onClick={() => onStepChange(null)}
-          _type='tertiary'
-          className='w-full'
-        >
-          Back
-        </Button>
-      </div>
-    </div>
+      <Button
+        _type='secondary'
+        onClick={() => setIsShowDomHierarchy(false)}
+      >
+        Hide Dom Hierarchy
+      </Button>
+    </>
   );
 };

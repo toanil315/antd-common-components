@@ -17,3 +17,4 @@ export { default as CircleIcon } from './CircleIcon';
 export { default as DiamondIcon } from './DiamondIcon';
 export { default as TooltipIcon } from './TooltipIcon';
 export { default as ModalIcon } from './ModalIcon';
+export { default as PencilIcon } from './PencilIcon';

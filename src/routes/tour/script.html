@@ -26,11 +26,19 @@
     SHOW_TOUR: 'show tour',
   };
 
-  const firstStep = {
-    popover: {
-      showButtons: [''],
-      popoverClass: 'introduction-linked-site',
-      description: `<div class="introduction-container">
+  const detailDocumentTemplate = (detailLink) => {
+    return `<br> <br> <a href="${detailLink}" class='introduction-btn-see-details' target='_blank'>See details documents</a>
+          <span style="margin-left: 8px">
+            <svg width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M0.292893 0.292893C0.683417 -0.0976311 1.31658 -0.0976311 1.70711 0.292893L7.70711 6.29289C8.09763 6.68342 8.09763 7.31658 7.70711 7.70711L1.70711 13.7071C1.31658 14.0976 0.683417 14.0976 0.292893 13.7071C-0.0976311 13.3166 -0.0976311 12.6834 0.292893 12.2929L5.58579 7L0.292893 1.70711C-0.0976311 1.31658 -0.0976311 0.683417 0.292893 0.292893Z" fill="#F2F4F7" />
+            </svg>
+          </span>`
+  }
+
+  const modalTemplate = (popoverConfig) => {
+    const { title, description, videoUrl } = popoverConfig
+
+    return `<div class="introduction-container">
   <div class="introduction-content">
           <button class="introduction-skip-button" onClick="onClickSkip()">Skip
             <div class="introduction-arrow-icon">
@@ -56,24 +64,14 @@
               </svg>
             </div>
             <div class="introduction-line"></div>
-            <div class="introduction-title">Introduction to LinkedSite</div>
-            <div class="introduction-subtitle">Manage products, managing projects, resources, and tracking time, cost, and progress of projects.
+            <div class="introduction-title">${title}</div>
+            <div class="introduction-subtitle">${description}
             </div>
             <div class="introduction-video-container">
-              <iframe src="https://player.vimeo.com/video/894318139?h=65335b9b2f" width="640" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen />
+              <iframe src="${videoUrl}" width="640" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen />
             </div>
           </div>
-                </div>`,
-    }
-  }
-
-  const detailDocumentTemplate = (detailLink) => {
-    return `<br> <br> <a href="${detailLink}" class='introduction-btn-see-details' target='_blank'>See details documents</a>
-          <span style="margin-left: 8px">
-            <svg width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path fill-rule="evenodd" clip-rule="evenodd" d="M0.292893 0.292893C0.683417 -0.0976311 1.31658 -0.0976311 1.70711 0.292893L7.70711 6.29289C8.09763 6.68342 8.09763 7.31658 7.70711 7.70711L1.70711 13.7071C1.31658 14.0976 0.683417 14.0976 0.292893 13.7071C-0.0976311 13.3166 -0.0976311 12.6834 0.292893 12.2929L5.58579 7L0.292893 1.70711C-0.0976311 1.31658 -0.0976311 0.683417 0.292893 0.292893Z" fill="#F2F4F7" />
-            </svg>
-          </span>`
+                </div>`
   }
 
   async function injectDriverJsScript() {
@@ -112,12 +110,18 @@
   }
 
   function buildPopoverContent(popoverConfig) {
+    if (popoverConfig.type === 'tooltip')
+      return {
+        ...popoverConfig,
+        description: popoverConfig.detailLink ? popoverConfig.description + detailDocumentTemplate(popoverConfig.detailLink) : popoverConfig.description,
+        prevBtnText: 'Skip',
+      }
+
     return {
       ...popoverConfig,
-      description: popoverConfig.detailLink ? popoverConfig.description + detailDocumentTemplate(popoverConfig.detailLink) : popoverConfig.description,
-      prevBtnText: 'Skip',
+      popoverClass: 'introduction-linked-site',
+      description: modalTemplate(popoverConfig),
     }
-
   }
 
   function showIntroduction() {
@@ -170,23 +174,6 @@
     return domHierarchy.replace('<body/>', '');
   }
 
-  const selectElementToHighlight = (event) => {
-    if (event.button === 2) {
-      // right click
-      try {
-        parent.postMessage(
-          {
-            type: MESSAGES.SELECT_ELEMENT,
-            element: getDomHierarchy(highlightBoxConfigs.target),
-          },
-          '*',
-        );
-      } catch (error) {
-        console.log('parent.postMessage error', error);
-      }
-    }
-  };
-
   function preventContextMenu(e) {
     e.preventDefault();
   }
@@ -222,11 +209,29 @@
         div.style.width = `${highlightBoxConfigs.boundingRect.width}px`;
         div.style.height = `${highlightBoxConfigs.boundingRect.height}px`;
         div.style.border = '2px solid #3b82f6';
+        div.style.background = 'rgba(59, 130, 246, 0.1)';
         div.style.pointerEvents = 'none';
         document.body.appendChild(div);
       }
     })();
   }
+
+  const selectElementToHighlight = (event) => {
+    if (event.button === 2) {
+      // right click
+      try {
+        parent.postMessage(
+          {
+            type: MESSAGES.SELECT_ELEMENT,
+            element: getDomHierarchy(highlightBoxConfigs.target),
+          },
+          '*',
+        );
+      } catch (error) {
+        console.log('parent.postMessage error', error);
+      }
+    }
+  };
 
   function throttle(func, delay = 50) {
     let lastCall = 0;
@@ -242,7 +247,7 @@
   function enableSelectElement() {
     const scrollable = document.body;
     scrollable.style.cursor = 'grab';
-    scrollable.addEventListener('mousedown', selectElementToHighlight, false);
+    scrollable.addEventListener('mousedown', selectElementToHighlight);
     scrollable.addEventListener('mouseover', highlightElementWhenHover);
     window.addEventListener('contextmenu', preventContextMenu);
   }
@@ -251,15 +256,47 @@
     const scrollable = document.body;
     scrollable.style.cursor = 'default';
     removeElement(highlightBoxConfigs.id)
-    scrollable.removeEventListener('mousedown', selectElementToHighlight, false);
+    scrollable.removeEventListener('mousedown', selectElementToHighlight);
     scrollable.removeEventListener('mouseover', highlightElementWhenHover);
     window.removeEventListener('contextmenu', preventContextMenu);
+  }
+
+  function updateContentOfTooltip(step) {
+    const popoverDescription = document.querySelector('.driver-popover > .driver-popover-description');
+    const popoverConfig = step.popover;
+    popoverDescription.innerHTML = popoverConfig.detailLink ? popoverConfig.description + detailDocumentTemplate(popoverConfig.detailLink) : popoverConfig.description
+  }
+
+  function updateContentOfModal(step) {
+    const modalTitle = document.querySelector('.introduction-linked-site .introduction-title');
+    const modalDescription = document.querySelector('.introduction-linked-site .introduction-subtitle');
+    const modalVideoContainer = document.querySelector('.introduction-linked-site .introduction-video-container iframe');
+    const popoverConfig = step.popover;
+
+    modalTitle.innerHTML = popoverConfig.title;
+    modalDescription.innerHTML = popoverConfig.description;
+    if (modalVideoContainer.src !== popoverConfig.videoUrl) {
+      modalVideoContainer.src = popoverConfig.videoUrl;
+    }
+  }
+
+  function updateContentOfPopover(step) {
+    if (step.popover.type === 'tooltip') {
+      return updateContentOfTooltip(step);
+    }
+    return updateContentOfModal(step);
   }
 
   function highlightELement(event) {
     const { step } = event.data;
     const { element, popover } = step;
-    let shouldShowPopover = popover.type === 'banner' ? true : Boolean(element);
+    let shouldShowPopover = popover.type === 'modal' ? true : Boolean(element);
+    const activeStep = toolDriverInstance.getActiveStep();
+
+    if (activeStep && activeStep.element === element) {
+      return updateContentOfPopover(step);
+    }
+
     if (shouldShowPopover) {
       toolDriverInstance.highlight({
         element,
@@ -273,7 +310,6 @@
 
   function buildFullTour(steps) {
     return [
-      firstStep,
       ...steps.map((step) => {
         return {
           ...step,
@@ -391,8 +427,7 @@
           };
           webDriverInstance.setConfig({
             popoverClass: "driverjs-theme",
-            steps: [...tour.steps, finalStep],
-            onPrevClick: onDestroyClick
+            steps: [...tour.steps, finalStep]
           });
           webDriverInstance.drive();
         }
