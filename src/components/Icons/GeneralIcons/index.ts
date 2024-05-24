@@ -18,3 +18,4 @@ export { default as DiamondIcon } from './DiamondIcon';
 export { default as TooltipIcon } from './TooltipIcon';
 export { default as ModalIcon } from './ModalIcon';
 export { default as PencilIcon } from './PencilIcon';
+export { default as OpenDoorIcon } from './OpenDoorIcon';

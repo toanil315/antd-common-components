@@ -3,8 +3,8 @@ import {
   Button,
   Input,
   ModalIcon,
+  OpenDoorIcon,
   OverflowMenu,
-  PencilIcon,
   PlusIcon,
   Popover,
   Select,
@@ -14,8 +14,7 @@ import Label from '@/components/Commons/Input/Label';
 import { useSaveTour, useTour } from '@/hooks/useTour';
 import { createLazyFileRoute } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import { DomHierarchyItem } from './styled';
-import { Tooltip } from 'antd';
+import styled from '@emotion/styled';
 
 export const Route = createLazyFileRoute('/tour/')({
   component: WebTourCreator,
@@ -193,94 +192,46 @@ function WebTourCreator() {
   );
 }
 
-const TourPanel = ({ tour, selectStep, addStep, iframeElement }: TourPanelProps) => {
-  const steps = tour.steps || [];
-
-  const handlePreviewStep = (step: Step) => {
-    iframeElement.contentWindow?.postMessage(
-      {
-        type: 'highlight element',
-        step,
-      },
-      '*',
-    );
-  };
-
-  const handlePreviewTour = () => {
-    iframeElement.contentWindow?.postMessage(
-      {
-        type: 'preview tour',
-        steps,
-      },
-      '*',
-    );
-  };
+const TourPanel = (props: TourPanelProps) => {
+  const { tour } = props;
 
   return (
     <div className='py-4 px-2 flex flex-col items-center gap-6'>
       <h4 className='w-full'>Tour</h4>
-      <Input
-        label='Tour Name'
-        placeholder='Enter tour name'
-        value={tour.name}
-      />
-      <Input
-        label='Tour Description'
-        type='textarea'
-        placeholder='Enter tour description'
-        value={tour.description}
-      />
-      <Input
-        label='Website url'
-        placeholder='enter website url to start tour'
-        value={tour.url}
-      />
-      <Button
-        className='w-full'
-        onClick={handlePreviewTour}
-        disabled={steps.length === 0}
-      >
-        Preview Tour
-      </Button>
-      <div className='my-2' />
-      <div className='w-full flex flex-row justify-between items-center'>
-        <h4>Steps</h4>
-        <Button
-          size='small'
-          onClick={addStep}
-        >
-          <PlusIcon fill='white' />
-        </Button>
-      </div>
-      <div className='w-full flex flex-col gap-4'>
-        {steps.map((step, index) => {
-          return (
-            <div
-              key={step.id}
-              onClick={() => handlePreviewStep(step)}
-              className='w-full flex flex-row items-center justify-between p-4 border border-solid rounded-md border-gray-300 cursor-pointer hover:bg-gray-100'
-            >
-              <div>
-                <p className='font-bold text-base text-gray-700'>Step {index + 1}</p>
-                <span className='text-xs font-medium text-gray-400'>{step.popover.type}</span>
+      <Accordion
+        defaultActiveKey={['tour-info']}
+        items={[
+          {
+            key: 'tour-info',
+            label: 'Tour Information',
+            children: (
+              <div className='w-full flex flex-col gap-4'>
+                <Input
+                  label='Tour Name'
+                  placeholder='Enter tour name'
+                  value={tour.name}
+                />
+                <Input
+                  label='Tour Description'
+                  type='textarea'
+                  placeholder='Enter tour description'
+                  value={tour.description}
+                />
+                <Input
+                  label='Website url'
+                  placeholder='enter website url to start tour'
+                  value={tour.url}
+                />
               </div>
-              <div className='flex flex-row items-center gap-4'>
-                <Tooltip title='Edit step'>
-                  <span
-                    onClick={() => selectStep(step)}
-                    className='text-sm text-blue-400 cursor-pointer p-2'
-                  >
-                    <PencilIcon
-                      width={20}
-                      height={20}
-                    />
-                  </span>
-                </Tooltip>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            ),
+          },
+          {
+            key: 'steps',
+            label: 'Steps',
+            children: <Steps {...props} />,
+          },
+        ]}
+      />
     </div>
   );
 };
@@ -321,6 +272,7 @@ const StepDetailPanel = (props: StepDetailPanelProps) => {
         </div>
         <div className='w-full'>
           <Accordion
+            defaultActiveKey={['element-selector']}
             items={[
               ...(step.popover.type === 'tooltip'
                 ? [
@@ -602,5 +554,148 @@ const DomHierarchyPresenter = ({ step, onStepChange, iframeElement }: StepDetail
         Hide Dom Hierarchy
       </Button>
     </>
+  );
+};
+
+const DomHierarchyItem = styled.li`
+  position: relative;
+  padding-left: 15px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: ${({ theme }) => theme.colors.primary_5};
+  }
+
+  &:after {
+    content: '';
+    position: absolute;
+    top: 42%;
+    left: -8px;
+    width: 1px;
+    height: 100%;
+    border-radius: 50%;
+    background-color: ${({ theme }) => theme.colors.primary_5};
+  }
+
+  &:last-child::after {
+    display: none;
+  }
+`;
+
+const Steps = ({ iframeElement, tour, selectStep, addStep }: TourPanelProps) => {
+  const steps = tour.steps || [];
+  const [currentActiveStepIndex, setCurrentActiveStepIndex] = useState(-1);
+
+  useEffect(() => {
+    const handleActiveIndexChange = (e: MessageEvent<any>) => {
+      if (e.data.type === 'current step index') {
+        console.log(e.data.stepIndex);
+        setCurrentActiveStepIndex(e.data.stepIndex);
+      }
+    };
+
+    window.addEventListener('message', handleActiveIndexChange);
+
+    return () => {
+      window.removeEventListener('message', handleActiveIndexChange);
+    };
+  }, []);
+
+  const handlePreviewStep = (step: Step) => {
+    iframeElement.contentWindow?.postMessage(
+      {
+        type: 'highlight element',
+        step,
+      },
+      '*',
+    );
+  };
+
+  const handlePreviewTour = () => {
+    iframeElement.contentWindow?.postMessage(
+      {
+        type: 'preview tour',
+        steps,
+      },
+      '*',
+    );
+  };
+
+  return (
+    <div className='w-full flex flex-col gap-4'>
+      <div className='w-full flex flex-col items-center gap-10'>
+        <div className='pl-4 pr-2 py-2 rounded-3xl border-2 border-gray-300 border-solid flex items-center gap-4'>
+          <p className='flex items-center gap-2'>
+            <OpenDoorIcon
+              width={28}
+              height={28}
+            />
+            <span className='font-bold'>Initiators</span>
+          </p>
+          <div
+            onClick={addStep}
+            className={`w-[35px] h-[35px] flex items-center justify-center cursor-pointer bg-[#01529d] rounded-full`}
+          >
+            <PlusIcon fill='white' />
+          </div>
+        </div>
+        {steps.map((step, index) => {
+          return (
+            <div
+              key={step.id}
+              onClick={() => handlePreviewStep(step)}
+              className='flex flex-col items-center gap-2'
+            >
+              <div
+                onClick={() => selectStep(step)}
+                className={`relative w-14 h-14 rounded-full flex items-center justify-center cursor-pointer ${
+                  currentActiveStepIndex === index ? 'bg-[#01529d]' : 'bg-[#8ec0ee]'
+                }`}
+              >
+                <div className='absolute -top-10 left-1/2 -translate-x-1/2 w-[1.5px] h-10 bg-yellow-200' />
+                {step.popover.type === 'tooltip' ? (
+                  <TooltipIcon
+                    width={24}
+                    height={24}
+                    fill='white'
+                  />
+                ) : (
+                  <ModalIcon
+                    width={24}
+                    height={24}
+                    fill='white'
+                  />
+                )}
+              </div>
+              <div>
+                <p
+                  className={`text-sm ${
+                    currentActiveStepIndex === index
+                      ? 'text-[#01529d] font-bold '
+                      : 'text-gray-700 font-medium '
+                  }`}
+                >
+                  Step {index + 1}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <Button
+        className='w-full mt-4'
+        onClick={handlePreviewTour}
+        disabled={steps.length === 0}
+      >
+        Preview Tour
+      </Button>
+    </div>
   );
 };

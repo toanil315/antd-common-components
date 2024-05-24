@@ -24,6 +24,7 @@
     CONNECTION_ESTABLISHED: 'connection established',
     ON_LOADED: 'on loaded',
     SHOW_TOUR: 'show tour',
+    CURRENT_STEP_INDEX: 'current step index',
   };
 
   const detailDocumentTemplate = (detailLink) => {
@@ -325,6 +326,19 @@
     toolDriverInstance.setConfig({
       popoverClass: "driverjs-theme",
       steps: buildFullTour(steps),
+      onHighlighted: (_, __, options) => {
+        const { state } = options;
+        parent.postMessage({
+          type: MESSAGES.CURRENT_STEP_INDEX,
+          stepIndex: state.activeIndex,
+        }, '*')
+      },
+      onDeselected: () => {
+        parent.postMessage({
+          type: MESSAGES.CURRENT_STEP_INDEX,
+          stepIndex: -1,
+        }, '*')
+      },
       onPrevClick: toolDriverInstance.destroy
     });
     toolDriverInstance.drive();
