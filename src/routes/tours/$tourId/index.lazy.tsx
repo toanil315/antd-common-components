@@ -22,6 +22,7 @@ export const Route = createLazyFileRoute('/tours/$tourId/')({
 });
 
 type PopoverType = 'tooltip' | 'modal' | 'driven action';
+type ActionType = 'click' | 'input';
 
 interface Popover {
   title?: string;
@@ -29,6 +30,7 @@ interface Popover {
   detailLink?: string;
   videoUrl?: string;
   type: PopoverType;
+  action?: ActionType;
   side?: 'top' | 'right' | 'bottom' | 'left';
   align?: 'start' | 'center' | 'end';
   showButtons?: ('next' | 'previous' | 'close')[];
@@ -466,6 +468,20 @@ const UIContentSection = ({ step, onStepChange, iframeElement }: StepDetailPanel
           onChange={handlePopoverConfigChange('videoUrl')}
         />
       )}
+      {step.popover.type === 'driven action' && (
+        <Select
+          name='action'
+          label='Action'
+          placeholder='Select action'
+          value={step.popover.action}
+          onChange={handlePopoverConfigChange('action')}
+          options={[
+            { label: 'Click', value: 'click' },
+            { label: 'Input', value: 'input' },
+          ]}
+        />
+      )}
+
       {step.popover.type === 'modal' && (
         <Button
           onClick={handlePreviewElement}

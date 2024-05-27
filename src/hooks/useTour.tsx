@@ -4,11 +4,11 @@ import axios from 'axios';
 export const TOUR_QUERY_CONFIGS = {
   list: {
     queryKey: ['tour', 'list'],
-    queryFn: () => axios.get('http://localhost:3000/tours'),
+    queryFn: () => axios.get('http://localhost:5500/tours'),
   },
   detail: (id: string) => ({
     queryKey: ['tour', 'detail', id],
-    queryFn: () => axios.get(`http://localhost:3000/tours/${id}`),
+    queryFn: () => axios.get(`http://localhost:5500/tours/${id}`),
   }),
 };
 
@@ -23,7 +23,7 @@ export const useTour = (id: string) => {
 export const useCreateTour = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => axios.post('http://localhost:3000/tours', data),
+    mutationFn: (data: any) => axios.post('http://localhost:5500/tours', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tour'] });
     },
@@ -33,7 +33,7 @@ export const useCreateTour = () => {
 export const useSaveTour = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: any) => axios.put('http://localhost:3000/tours', data),
+    mutationFn: (data: any) => axios.put('http://localhost:5500/tours', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tour'] });
     },
