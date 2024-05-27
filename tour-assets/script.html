@@ -419,32 +419,13 @@
         const tours = await data.json();
         const { tourId } = e.detail;
         const tour = tours.find((tour) => tour.id === tourId);
-        if (!tour.nextTourId) {
-          webDriverInstance.setConfig({
-            ...tour,
-            popoverClass: "driverjs-theme",
-            steps: buildFullTour(tour.steps),
-            onPrevClick: onDestroyClick
-          });
-          webDriverInstance.drive();
-        } else {
-          const nextTour = tours.find((t) => t.id === tour.nextTourId);
-          localStorage.setItem('unfinishedTour', JSON.stringify(nextTour));
-          const finalStep = {
-            element: null,
-            popover: {
-              title: `Next part is ${nextTour.name}`,
-              description: nextTour.description,
-              disableButtons: ['previous'],
-              doneBtnText: `<a href="${nextTour.url}">Ok, let's go</a>`,
-            },
-          };
-          webDriverInstance.setConfig({
-            popoverClass: "driverjs-theme",
-            steps: [...tour.steps, finalStep]
-          });
-          webDriverInstance.drive();
-        }
+        webDriverInstance.setConfig({
+          ...tour,
+          popoverClass: "driverjs-theme",
+          steps: buildFullTour(tour.steps),
+          onPrevClick: onDestroyClick
+        });
+        webDriverInstance.drive();
       });
 
       const unfinishedTourStr = localStorage.getItem('unfinishedTour');

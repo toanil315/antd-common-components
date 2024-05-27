@@ -1,5 +1,7 @@
+import { createLazyFileRoute } from '@tanstack/react-router';
 import {
   Accordion,
+  ActionIcon,
   Button,
   Input,
   ModalIcon,
@@ -12,20 +14,21 @@ import {
 } from '@/components';
 import Label from '@/components/Commons/Input/Label';
 import { useSaveTour, useTour } from '@/hooks/useTour';
-import { createLazyFileRoute } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import styled from '@emotion/styled';
 
-export const Route = createLazyFileRoute('/tour/')({
+export const Route = createLazyFileRoute('/tours/$tourId/')({
   component: WebTourCreator,
 });
+
+type PopoverType = 'tooltip' | 'modal' | 'driven action';
 
 interface Popover {
   title?: string;
   description?: string;
   detailLink?: string;
   videoUrl?: string;
-  type: 'tooltip' | 'modal';
+  type: PopoverType;
   side?: 'top' | 'right' | 'bottom' | 'left';
   align?: 'start' | 'center' | 'end';
   showButtons?: ('next' | 'previous' | 'close')[];
@@ -63,7 +66,7 @@ interface TourPanelProps {
 
 interface StepDetailPanelProps {
   step: Step;
-  onStepChange: (step: Step | null) => void;
+  onStepChange: (step: Step | null, option?: { highlight: boolean }) => void;
   saveChanges: () => void;
   iframeElement: HTMLIFrameElement;
 }
@@ -77,13 +80,18 @@ const POPOVER_TYPES = {
     type: 'modal',
     Icon: ModalIcon,
   },
+  drivenAction: {
+    type: 'driven action',
+    Icon: ActionIcon,
+  },
 };
 
 function WebTourCreator() {
   const [selectedStep, setSelectedStep] = useState<Step | null>(null);
   const [isSettingUpFinished, setIsSettingUpFinished] = useState(false);
   const iframeElementRef = useRef<HTMLIFrameElement | null>(null);
-  const { data } = useTour();
+  const { tourId } = Route.useParams();
+  const { data } = useTour(tourId);
   const { mutateAsync } = useSaveTour();
   const tour = data?.data as Tour;
 
@@ -120,13 +128,20 @@ function WebTourCreator() {
     setSelectedStep(newStep);
   };
 
-  const handleStepChange = (step: Step | null) => {
+  const handleStepChange = (step: Step | null, option = { highlight: true }) => {
     setSelectedStep(step);
-    if (step) {
+    if (step && option.highlight) {
       iframeElementRef.current?.contentWindow?.postMessage(
         {
           type: 'highlight element',
           step,
+        },
+        '*',
+      );
+    } else {
+      iframeElementRef.current?.contentWindow?.postMessage(
+        {
+          type: 'clean up',
         },
         '*',
       );
@@ -181,11 +196,15 @@ function WebTourCreator() {
             We are setting up the tour creator. Please wait...
           </div>
         )}
-        <iframe
-          className='w-full h-full'
-          src='http://localhost:5500'
-          ref={iframeElementRef}
-        />
+        {tour ? (
+          <iframe
+            className='w-full h-full'
+            src={tour.url}
+            ref={iframeElementRef}
+          />
+        ) : (
+          <div className='w-full h-full'></div>
+        )}
       </div>
       <div className='w-[300px] h-screen overflow-y-auto'>{renderPanel()}</div>
     </div>
@@ -221,6 +240,7 @@ const TourPanel = (props: TourPanelProps) => {
                   label='Website url'
                   placeholder='enter website url to start tour'
                   value={tour.url}
+                  readOnly
                 />
               </div>
             ),
@@ -274,7 +294,7 @@ const StepDetailPanel = (props: StepDetailPanelProps) => {
           <Accordion
             defaultActiveKey={['element-selector']}
             items={[
-              ...(step.popover.type === 'tooltip'
+              ...(step.popover.type !== 'modal'
                 ? [
                     {
                       key: 'element-selector',
@@ -452,7 +472,7 @@ const UIContentSection = ({ step, onStepChange, iframeElement }: StepDetailPanel
           _type='secondary'
           className='w-full'
         >
-          Highlight Selected Element
+          Highlight Modal
         </Button>
       )}
     </div>
@@ -596,7 +616,6 @@ const Steps = ({ iframeElement, tour, selectStep, addStep }: TourPanelProps) => 
   useEffect(() => {
     const handleActiveIndexChange = (e: MessageEvent<any>) => {
       if (e.data.type === 'current step index') {
-        console.log(e.data.stepIndex);
         setCurrentActiveStepIndex(e.data.stepIndex);
       }
     };
@@ -626,6 +645,38 @@ const Steps = ({ iframeElement, tour, selectStep, addStep }: TourPanelProps) => 
       },
       '*',
     );
+  };
+
+  const renderStepIcon = (type: PopoverType) => {
+    switch (type) {
+      case 'tooltip': {
+        return (
+          <TooltipIcon
+            width={24}
+            height={24}
+            fill='white'
+          />
+        );
+      }
+      case 'modal': {
+        return (
+          <ModalIcon
+            width={24}
+            height={24}
+            fill='white'
+          />
+        );
+      }
+      case 'driven action': {
+        return (
+          <ActionIcon
+            width={24}
+            height={24}
+            fill='white'
+          />
+        );
+      }
+    }
   };
 
   return (
@@ -660,19 +711,7 @@ const Steps = ({ iframeElement, tour, selectStep, addStep }: TourPanelProps) => 
                 }`}
               >
                 <div className='absolute -top-10 left-1/2 -translate-x-1/2 w-[1.5px] h-10 bg-yellow-200' />
-                {step.popover.type === 'tooltip' ? (
-                  <TooltipIcon
-                    width={24}
-                    height={24}
-                    fill='white'
-                  />
-                ) : (
-                  <ModalIcon
-                    width={24}
-                    height={24}
-                    fill='white'
-                  />
-                )}
+                {renderStepIcon(step.popover.type)}
               </div>
               <div>
                 <p

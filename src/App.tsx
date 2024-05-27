@@ -10,16 +10,16 @@ import i18n from '@/i18n';
 import { RouterProvider, createRouter } from '@tanstack/react-router';
 import { routeTree } from './routeTree.gen';
 
-// Create a new router instance
-const router = createRouter({ routeTree });
-
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 2, // 2 minutes,
     },
   },
 });
+
+// Create a new router instance
+const router = createRouter({ routeTree, context: { queryClient } });
 
 const App = () => {
   const convertToPx = (value: string) => Number(value.replace('px', ''));

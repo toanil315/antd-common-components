@@ -19,12 +19,13 @@ import { Route as AuthImport } from './routes/_auth'
 // Create Virtual Routes
 
 const FlowRouteLazyImport = createFileRoute('/flow')()
-const TourIndexLazyImport = createFileRoute('/tour/')()
+const ToursIndexLazyImport = createFileRoute('/tours/')()
 const IndexIndexLazyImport = createFileRoute('/_index/')()
 const IndexPostsRouteLazyImport = createFileRoute('/_index/posts')()
 const IndexAboutRouteLazyImport = createFileRoute('/_index/about')()
 const AuthSignUpRouteLazyImport = createFileRoute('/_auth/sign-up')()
 const AuthLoginRouteLazyImport = createFileRoute('/_auth/login')()
+const ToursTourIdIndexLazyImport = createFileRoute('/tours/$tourId/')()
 const IndexPostsIndexLazyImport = createFileRoute('/_index/posts/')()
 const IndexPostsIdRouteLazyImport = createFileRoute('/_index/posts/$id')()
 const IndexPostsIdIndexLazyImport = createFileRoute('/_index/posts/$id/')()
@@ -49,10 +50,10 @@ const AuthRoute = AuthImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const TourIndexLazyRoute = TourIndexLazyImport.update({
-  path: '/tour/',
+const ToursIndexLazyRoute = ToursIndexLazyImport.update({
+  path: '/tours/',
   getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/tour/index.lazy').then((d) => d.Route))
+} as any).lazy(() => import('./routes/tours/index.lazy').then((d) => d.Route))
 
 const IndexIndexLazyRoute = IndexIndexLazyImport.update({
   path: '/',
@@ -85,6 +86,13 @@ const AuthLoginRouteLazyRoute = AuthLoginRouteLazyImport.update({
   getParentRoute: () => AuthRoute,
 } as any).lazy(() =>
   import('./routes/_auth/login/route.lazy').then((d) => d.Route),
+)
+
+const ToursTourIdIndexLazyRoute = ToursTourIdIndexLazyImport.update({
+  path: '/tours/$tourId/',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() =>
+  import('./routes/tours/$tourId/index.lazy').then((d) => d.Route),
 )
 
 const IndexPostsIndexLazyRoute = IndexPostsIndexLazyImport.update({
@@ -151,8 +159,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexIndexLazyImport
       parentRoute: typeof IndexImport
     }
-    '/tour/': {
-      preLoaderRoute: typeof TourIndexLazyImport
+    '/tours/': {
+      preLoaderRoute: typeof ToursIndexLazyImport
       parentRoute: typeof rootRoute
     }
     '/_index/posts/$id': {
@@ -162,6 +170,10 @@ declare module '@tanstack/react-router' {
     '/_index/posts/': {
       preLoaderRoute: typeof IndexPostsIndexLazyImport
       parentRoute: typeof IndexPostsRouteLazyImport
+    }
+    '/tours/$tourId/': {
+      preLoaderRoute: typeof ToursTourIdIndexLazyImport
+      parentRoute: typeof rootRoute
     }
     '/_index/posts/$id/edit': {
       preLoaderRoute: typeof IndexPostsIdEditRouteLazyImport
@@ -190,7 +202,8 @@ export const routeTree = rootRoute.addChildren([
     IndexIndexLazyRoute,
   ]),
   FlowRouteLazyRoute,
-  TourIndexLazyRoute,
+  ToursIndexLazyRoute,
+  ToursTourIdIndexLazyRoute,
 ])
 
 /* prettier-ignore-end */

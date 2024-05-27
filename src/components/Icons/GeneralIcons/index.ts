@@ -19,3 +19,4 @@ export { default as TooltipIcon } from './TooltipIcon';
 export { default as ModalIcon } from './ModalIcon';
 export { default as PencilIcon } from './PencilIcon';
 export { default as OpenDoorIcon } from './OpenDoorIcon';
+export { default as ActionIcon } from './ActionIcon';
