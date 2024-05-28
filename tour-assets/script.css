@@ -1,4 +1,4 @@
-
+ 
 .driver-active .driver-active-element,.driver-popover,.driver-popover *{
   pointer-events:auto
 }
@@ -181,7 +181,7 @@
   display:none
 }
 
-/* =============================================CUSTOM CSS============================================= */
+/* ==========================================================================================CUSTOM CSS========================================================================================== */
 
   .driver-active > svg {
     pointer-events: none !important;
@@ -191,6 +191,12 @@
   .invisible {
     visibility: hidden!important;
   }
+
+  .driver-popover {
+    display: flex;
+    flex-flow: column nowrap;
+    gap: 10px;
+  }
   
   .driver-popover.driverjs-theme {
     background-color: #000;
@@ -199,29 +205,36 @@
   }
   
   .driver-popover.driverjs-theme .driver-popover-title {
-    display: none !important;
+    color: white !important;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 24px;
   }
   
   .driver-popover-description {
-    color: #fff;
+    color: rgba(166, 170, 181, 1);
     font-size: 16px;
     font-weight: 400;
+    line-height: 24px;
   }
   
   .driver-popover-prev-btn {
+    flex: unset !important;
     text-align: left !important;
     font-weight: 700 !important;
     font-size: 14px !important;
-    opacity: 0.5 !important;
+    color: rgba(170, 170, 170, 1) !important;
+    text-align: left !important;
+    padding-left: 0 !important;
   }
   .driver-popover-next-btn {
+    flex: unset !important;
     text-align: right !important;
     font-weight: 700 !important;
-    font-size: 14px !important;
-  }
-  
-  .driver-popover-footer button {
-    padding: 0 !important;
+    font-size: 12px !important;
+    padding: 8px 14px !important;
+    border-radius: 8px !important;
+    background-color: rgba(249, 0, 0, 1) !important;
   }
   
   .driver-popover.driverjs-theme .driver-popover-title,
@@ -279,10 +292,11 @@
   }
   
   .introduction-btn-see-details {
+    margin-top: 6px;
+    display: inline-block;
     font-size: 16px !important;
     padding: 0 !important;
-    color: #fff !important;
-    text-decoration: none !important;
+    color: rgba(166, 170, 181, 1) !important;
   }
   
   .introduction-linked-site {
@@ -307,7 +321,7 @@
     right: 0;
     top: 0;
     bottom: 0;
-    height: 768px;
+    height: max-content;
     width: 866px;
     margin: auto;
   }
@@ -335,8 +349,9 @@
     margin: auto;
     margin-top: 8px;
     margin-bottom: 20px;
-    width: 420px;
+    width: 80%;
     line-height: 24px;
+    text-align: center;
   }
   
   .introduction-video-container iframe {

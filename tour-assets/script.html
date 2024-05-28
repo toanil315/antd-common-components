@@ -17,6 +17,7 @@
     popoverClass: "driverjs-theme",
     allowClose: false,
     disableActiveInteraction: false,
+    nextBtnText: 'Next'
   }
 
   const MESSAGES = {
@@ -34,12 +35,7 @@
   };
 
   const detailDocumentTemplate = (detailLink) => {
-    return `<br> <br> <a href="${detailLink}" class='introduction-btn-see-details' target='_blank'>See details documents</a>
-              <span style="margin-left: 8px">
-                <svg width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path fill-rule="evenodd" clip-rule="evenodd" d="M0.292893 0.292893C0.683417 -0.0976311 1.31658 -0.0976311 1.70711 0.292893L7.70711 6.29289C8.09763 6.68342 8.09763 7.31658 7.70711 7.70711L1.70711 13.7071C1.31658 14.0976 0.683417 14.0976 0.292893 13.7071C-0.0976311 13.3166 -0.0976311 12.6834 0.292893 12.2929L5.58579 7L0.292893 1.70711C-0.0976311 1.31658 -0.0976311 0.683417 0.292893 0.292893Z" fill="#F2F4F7" />
-                </svg>
-              </span>`
+    return `<br><a href="${detailLink}" class='introduction-btn-see-details' target='_blank'>See details documents</a>`
   }
 
   const modalTemplate = (popoverConfig) => {
@@ -484,12 +480,12 @@
   async function initTourListener() {
     try {
       window.addEventListener('start tour', async function (e) {
-        const data = await fetch('http://localhost:3000/tours');
+        const data = await fetch('http://4.145.90.215:3000/tours');
         if (!data.ok) return;
 
         const tours = await data.json();
-        const { tourId } = e.detail;
-        const tour = tours.find((tour) => tour.id === tourId);
+        const { role } = e.detail;
+        const tour = tours.find((tour) => tour.forRole === role);
         webDriverInstance.setConfig({
           ...tour,
           ...BASE_TOUR_CONFIG,
@@ -497,9 +493,6 @@
           onHighlightStarted: (_, step) => {
             if (step.popover.type === 'driven action') {
               preventDefaultWhenDrivenActionIsHighlighted(webDriverInstance, step)
-            }
-            else {
-              releasePreventDefaultWhenDrivenActionIsHighlighted(webDriverInstance)
             }
           },
           onPrevClick: onDestroyClick
@@ -512,7 +505,7 @@
         const unfinishedTour = JSON.parse(unfinishedTourStr);
         localStorage.removeItem('unfinishedTour');
         window.dispatchEvent(
-          new CustomEvent('start tour', { detail: { tourId: unfinishedTour.id } }),
+          new CustomEvent('start tour', { detail: { role: unfinishedTour.forRole } }),
         );
       }
     }

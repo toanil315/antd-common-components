@@ -26,6 +26,33 @@ interface Tour extends BaseTour {
   id: string;
 }
 
+const ROLE_OPTIONS = [
+  {
+    label: 'Site Worker (Wages)',
+    value: 'SITE_WORKER',
+  },
+  {
+    label: 'Supervisor',
+    value: 'SUPERVISOR',
+  },
+  {
+    label: 'Project Engineer',
+    value: 'PROJECT_ENGINEER',
+  },
+  {
+    label: 'Sub-contractor',
+    value: 'SUB_CONTRACTOR',
+  },
+  {
+    label: 'Finance Manager',
+    value: 'FINANCE_MANAGER',
+  },
+  {
+    label: 'Office Worker',
+    value: 'OFFICE_WORKER',
+  },
+];
+
 function TourList() {
   const { data } = useTours();
   const navigate = useNavigate();
@@ -169,17 +196,7 @@ function TourModal({ modal }: { modal: ReturnType<typeof useModal> }) {
         <Form.Select
           label='Role'
           name='forRole'
-          options={[
-            'Site Worker (Wages)',
-            'Supervisor',
-            'Project Engineer',
-            'Sub-contractor',
-            'Finance Manager',
-            'Office Worker',
-          ].map((role) => ({
-            label: role,
-            value: role,
-          }))}
+          options={ROLE_OPTIONS}
           required
           placeholder='Select role'
         />

@@ -338,6 +338,13 @@ const ElementSelectorSection = (props: StepDetailPanelProps) => {
   const [isGettingElement, setIsGettingElement] = useState(false);
 
   useEffect(() => {
+    return () => {
+      iframeElement.contentWindow?.postMessage({ type: 'end getting element' }, '*');
+      iframeElement.contentWindow?.postMessage({ type: 'clean up' }, '*');
+    };
+  }, []);
+
+  useEffect(() => {
     const handleIframeMessages = (e: MessageEvent<any>) => {
       if (e.data.type === 'select element') {
         delete e.data.type;
@@ -351,11 +358,9 @@ const ElementSelectorSection = (props: StepDetailPanelProps) => {
 
     window.addEventListener('message', handleIframeMessages);
     return () => {
-      iframeElement.contentWindow?.postMessage({ type: 'end getting element' }, '*');
-      iframeElement.contentWindow?.postMessage({ type: 'clean up' }, '*');
       window.removeEventListener('message', handleIframeMessages);
     };
-  }, []);
+  }, [step]);
 
   const handleChangeElement = () => {
     setIsGettingElement(true);
