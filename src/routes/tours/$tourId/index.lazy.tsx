@@ -3,6 +3,7 @@ import {
   Accordion,
   ActionIcon,
   Button,
+  ColorPicker,
   Input,
   ModalIcon,
   OpenDoorIcon,
@@ -41,6 +42,10 @@ interface Popover {
   showProgress?: boolean;
   progressText?: string;
   popoverClass?: string;
+  titleColor?: string;
+  descriptionColor?: string;
+  fontSize?: number;
+  tooltipBgColor?: string;
 }
 
 interface Step {
@@ -68,7 +73,7 @@ interface TourPanelProps {
 
 interface StepDetailPanelProps {
   step: Step;
-  onStepChange: (step: Step | null, option?: { highlight: boolean }) => void;
+  onStepChange: (step: Step | null, option?: { highlight: boolean; debounce: boolean }) => void;
   saveChanges: () => void;
   iframeElement: HTMLIFrameElement;
 }
@@ -96,6 +101,7 @@ function WebTourCreator() {
   const { data } = useTour(tourId);
   const { mutateAsync } = useSaveTour();
   const tour = data?.data as Tour;
+  const debounceHighlightElementRef = useRef<NodeJS.Timeout | null>(null);
 
   const saveChanges = async () => {
     if (selectedStep) {
@@ -130,9 +136,11 @@ function WebTourCreator() {
     setSelectedStep(newStep);
   };
 
-  const handleStepChange = (step: Step | null, option = { highlight: true }) => {
-    setSelectedStep(step);
-    if (step && option.highlight) {
+  const debounceHighlightElement = (step: Step) => {
+    if (debounceHighlightElementRef.current) {
+      clearTimeout(debounceHighlightElementRef.current);
+    }
+    debounceHighlightElementRef.current = setTimeout(() => {
       iframeElementRef.current?.contentWindow?.postMessage(
         {
           type: 'highlight element',
@@ -140,6 +148,23 @@ function WebTourCreator() {
         },
         '*',
       );
+    }, 300);
+  };
+
+  const handleStepChange = (step: Step | null, option = { highlight: true, debounce: false }) => {
+    setSelectedStep(step);
+    if (step && option.highlight) {
+      if (!option.debounce) {
+        return iframeElementRef.current?.contentWindow?.postMessage(
+          {
+            type: 'highlight element',
+            step,
+          },
+          '*',
+        );
+      }
+
+      return debounceHighlightElement(step);
     } else {
       iframeElementRef.current?.contentWindow?.postMessage(
         {
@@ -310,6 +335,15 @@ const StepDetailPanel = (props: StepDetailPanelProps) => {
                 label: 'UI Content',
                 children: <UIContentSection {...props} />,
               },
+              ...(step.popover.type !== 'modal'
+                ? [
+                    {
+                      key: 'box-styles',
+                      label: 'Box Styles',
+                      children: <BoxStylesSection {...props} />,
+                    },
+                  ]
+                : []),
             ]}
           />
         </div>
@@ -465,14 +499,12 @@ const UIContentSection = ({ step, onStepChange, iframeElement }: StepDetailPanel
         value={step.popover.detailLink}
         onChange={handlePopoverConfigChange('detailLink')}
       />
-      {step.popover.type === 'modal' && (
-        <Input
-          label='Video Link'
-          placeholder='Enter popover video link'
-          value={step.popover.videoUrl}
-          onChange={handlePopoverConfigChange('videoUrl')}
-        />
-      )}
+      <Input
+        label='Video Link'
+        placeholder='Enter popover video link'
+        value={step.popover.videoUrl}
+        onChange={handlePopoverConfigChange('videoUrl')}
+      />
       {step.popover.type === 'driven action' && (
         <Select
           name='action'
@@ -496,6 +528,75 @@ const UIContentSection = ({ step, onStepChange, iframeElement }: StepDetailPanel
           Highlight Modal
         </Button>
       )}
+    </div>
+  );
+};
+
+const BoxStylesSection = ({ step, onStepChange }: StepDetailPanelProps) => {
+  const handlePopoverConfigChange = (key: string) => (value: string | number | undefined) => {
+    onStepChange(
+      {
+        ...step,
+        popover: {
+          ...step.popover,
+          [key]: value || '',
+        },
+      },
+      {
+        highlight: true,
+        debounce: true,
+      },
+    );
+  };
+
+  return (
+    <div className='flex flex-col gap-6'>
+      <Input
+        label='Text Size (px)'
+        placeholder='Enter text size'
+        value={step.popover.fontSize || 16}
+        type='number'
+        onChange={handlePopoverConfigChange('fontSize')}
+      />
+      <ColorPicker
+        label='Title Color'
+        value={step.popover.titleColor || '#ffffff'}
+        onChange={handlePopoverConfigChange('titleColor')}
+        showText
+        presets={[
+          {
+            label: 'Default',
+            colors: ['#ffffff'],
+            defaultOpen: true,
+          },
+        ]}
+      />
+      <ColorPicker
+        label='Description Color'
+        value={step.popover.descriptionColor || '#a6aab5'}
+        onChange={handlePopoverConfigChange('descriptionColor')}
+        showText
+        presets={[
+          {
+            label: 'Default',
+            colors: ['#a6aab5'],
+            defaultOpen: true,
+          },
+        ]}
+      />
+      <ColorPicker
+        label='Tooltip Background Color'
+        value={step.popover.tooltipBgColor || '#000000'}
+        onChange={handlePopoverConfigChange('tooltipBgColor')}
+        showText
+        presets={[
+          {
+            label: 'Default',
+            colors: ['#000000'],
+            defaultOpen: true,
+          },
+        ]}
+      />
     </div>
   );
 };

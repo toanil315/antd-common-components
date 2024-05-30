@@ -20,3 +20,4 @@ export * from './Slider';
 export * from './BodyLayout';
 export * from './Empty';
 export * from './Editor';
+export * from './ColorPicker';
