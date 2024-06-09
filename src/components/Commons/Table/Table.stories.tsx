@@ -20,7 +20,6 @@ const meta: Meta<typeof Table> = {
             this instance contains table state like sort, filter, pagination, 
             these table's state will be updated automatically when you interact with the table,
             so you can use this to fetch data from server side.
-
             NOTE: table's state will be stored in URL query params, 
             this approach is used to achieve following goals:
             + make the table's state bookmarkable

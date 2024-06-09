@@ -1,9 +1,8 @@
 import { usePagination } from './usePagination';
 import { useState } from 'react';
 import { SORT_ORDER_ENUM } from '@/constants';
-import { TablePaginationConfig, TableProps } from 'antd';
-import { useNavigate } from '@tanstack/react-router';
-import { SorterResult } from 'antd/es/table/interface';
+import { useSearchParams } from 'react-router-dom';
+import { TableProps } from 'antd';
 
 export interface PaginationParams {
   page: number;
@@ -36,54 +35,17 @@ export const useTable = ({
   const pagination = usePagination(defaultPagination);
   const sort = useSortTable(defaultSort);
   const filter = useFilterTable(defaultFilter);
-  const navigate = useNavigate();
-
-  const createLegacySearchParams = (
-    paginationValue: TablePaginationConfig,
-    filterValue: Record<string, unknown[]> | FilterParams,
-    sortValue: SorterResult<any> | SorterResult<any>[] | SortParams,
-  ) => {
-    const searchParams: Record<string, any> = {};
-
-    // Pagination params
-    if (paginationValue) {
-      searchParams.page = paginationValue.current || pagination.currentPage;
-      searchParams.limit = paginationValue.pageSize || pagination.limit;
-    }
-
-    // Filter params
-    if (filterValue) {
-      const filterEntries = Object.entries(filterValue);
-      filterEntries.forEach(([field, values]) => {
-        if (values && values.length) {
-          if (!searchParams.filter) searchParams.filter = [];
-          searchParams.filter.push(`${field}${filterParamsSeparator}${values.join(',')}`);
-          searchParams.page = 1;
-        }
-      });
-    }
-
-    // Sort params
-    if (sortValue) {
-      const { field, order } = sortValue as SortParams;
-      if (field && order) {
-        searchParams.sort = `${field}${sortParamsSeparator}${order}`;
-      }
-    }
-
-    return searchParams;
-  };
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const onChange: TableProps['onChange'] = (paginationValue, filterValue, sortValue) => {
     pagination.onPageChange(
       paginationValue?.current || pagination.currentPage,
       paginationValue?.pageSize || pagination.limit,
+      searchParams,
     );
-    if (filterValue) filter.onFilter(filterValue);
-    if (sortValue) sort.onSort(sortValue as SortParams);
-    navigate({
-      search: createLegacySearchParams(paginationValue, filterValue, sortValue),
-    });
+    if (filterValue) filter.onFilter(filterValue, searchParams);
+    if (sortValue) sort.onSort(sortValue as SortParams, searchParams);
+    setSearchParams(searchParams);
   };
 
   return {
@@ -97,12 +59,16 @@ export const useTable = ({
 const useSortTable = (initialSort?: SortParams) => {
   const [sortedInfo, setSortedInfo] = useState<Partial<SortParams>>(getInitialSort(initialSort));
 
-  const onSort = ({ field, order }: SortParams) => {
+  const onSort = ({ field, order }: SortParams, searchParams: URLSearchParams) => {
+    searchParams.delete('sort');
     if (field && order) {
+      searchParams.append('sort', `${field}${sortParamsSeparator}${order}`);
       setSortedInfo({ field, order });
     } else {
       setSortedInfo({});
     }
+
+    return searchParams;
   };
 
   return {
@@ -115,8 +81,18 @@ const useFilterTable = (initialFilter?: FilterParams) => {
     getInitialFilter(initialFilter),
   );
 
-  const onFilter = (filterParams: FilterParams) => {
+  const onFilter = (filterParams: FilterParams, searchParams: URLSearchParams) => {
+    searchParams.delete('filter');
+    const filterEntries = Object.entries(filterParams);
+    filterEntries.forEach(([field, values]) => {
+      if (values && values.length) {
+        searchParams.append('filter', `${field}${filterParamsSeparator}${values.join(',')}`);
+      }
+    });
+    searchParams.delete('page');
+    searchParams.append('page', '1');
     setFilteredInfo(filterParams);
+    return searchParams;
   };
 
   return {
@@ -143,12 +119,11 @@ const getInitialSort = (defaultSort?: SortParams): Partial<SortParams> => {
 
 const getInitialFilter = (defaultFilter?: FilterParams): Partial<FilterParams> => {
   const searchParams = new URLSearchParams(window.location.search);
-  const valuesString = searchParams.getAll('filter')?.[0];
-  const valuesArr = valuesString ? JSON.parse(valuesString) : null;
+  const values = searchParams.getAll('filter');
   let result: Record<string, unknown[]> = {};
 
-  if (valuesArr) {
-    valuesArr.forEach((filterQuery: string) => {
+  if (values) {
+    values.forEach((filterQuery) => {
       const [filterField, filterValuesStr] = filterQuery.split(filterParamsSeparator);
       const filterValues = filterValuesStr.split(',');
 

@@ -8,12 +8,10 @@ import theme from '@/styles/theme';
 import { Pagination } from '../Pagination';
 import SortAndFilter from './SortAndFilter';
 import TableResponsive from './TableResponsive';
-
 interface Props extends TableProps {
   tableInstance: ReturnType<typeof useTable>;
   totalElements: number;
 }
-
 const Table = ({ tableInstance, totalElements, ...restProps }: Props) => {
   const { pagination, filter, sort } = tableInstance;
   const {
@@ -21,6 +19,7 @@ const Table = ({ tableInstance, totalElements, ...restProps }: Props) => {
   } = useDimension();
 
   const handleChange: TableProps['onChange'] = (paginationValue, filterValue, sortValue) => {
+    console.log('====paginationValue', paginationValue);
     tableInstance.onChange(paginationValue, filterValue, sortValue, restProps.dataSource as any);
   };
 
@@ -50,13 +49,11 @@ const Table = ({ tableInstance, totalElements, ...restProps }: Props) => {
     });
     return newColumn;
   }, [restProps.columns, JSON.stringify(sort.sortedInfo), JSON.stringify(filter.filteredInfo)]);
-
   const locale = useMemo(() => {
     return {
       emptyText: <DataEmpty />,
     };
   }, []);
-
   const renderTableBaseOnDimension = () => {
     if (isXs) {
       return (
@@ -72,7 +69,6 @@ const Table = ({ tableInstance, totalElements, ...restProps }: Props) => {
         </>
       );
     }
-
     return (
       <StyledTable
         onChange={handleChange}
@@ -85,7 +81,6 @@ const Table = ({ tableInstance, totalElements, ...restProps }: Props) => {
       />
     );
   };
-
   return (
     <div>
       {renderTableBaseOnDimension()}
@@ -99,5 +94,4 @@ const Table = ({ tableInstance, totalElements, ...restProps }: Props) => {
     </div>
   );
 };
-
 export default Table;
