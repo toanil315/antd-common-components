@@ -14,6 +14,8 @@ const EditorContentManager = ({ value }: Props) => {
     }
   }, [editor, value]);
 
+  console.log('editor', editor?.getJSON());
+
   return null;
 };
 

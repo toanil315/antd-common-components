@@ -22,6 +22,9 @@ import MenuBar from './MenuBar';
 import BubbleMenu from '@tiptap/extension-bubble-menu';
 import TableBubbleMenu from './bubble-menus/TableBubbleMenu';
 import EditorContentManager from './EditorContentManager';
+import Placeholder from '@tiptap/extension-placeholder';
+import AutoJoiner from 'tiptap-extension-auto-joiner';
+import GlobalDragHandle from 'tiptap-extension-global-drag-handle';
 
 const extensions = [
   Color.configure({ types: [TextStyle.name, ListItem.name, 'textStyle'] }),
@@ -63,6 +66,12 @@ const extensions = [
       keepAttributes: false, // TODO : Making this as `false` becase marks are not preserved when I try to preserve attrs, awaiting a bit of help
     },
   }),
+  Placeholder.configure({
+    placeholder: 'Write something...',
+    includeChildren: true,
+  }),
+  AutoJoiner,
+  GlobalDragHandle,
 ];
 
 interface Props {

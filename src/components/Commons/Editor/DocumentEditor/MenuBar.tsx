@@ -1,7 +1,7 @@
 import { useCurrentEditor } from '@tiptap/react';
 import { MenuBarSeparator, StyledButtonView, StyledMenuBar } from './styled';
 import { OverflowMenu } from '../../OverflowMenu';
-import HeadingPlugin, { HeadingLevel } from './plugins/HeadingPlugin';
+import HeadingPlugin from './plugins/HeadingPlugin';
 import TextStylePlugin, { TextStyle } from './plugins/TextStylePlugin';
 import LinkPlugin from './plugins/LinkPlugin';
 import ImagePlugin from './plugins/ImagePlugin';
@@ -38,14 +38,9 @@ const MenuBar = () => {
 
         {/* HEADING PLUGINS */}
         <div className='bottom'>
-          {Array(6)
-            .fill(0)
-            .map((_, index) => (
-              <HeadingPlugin
-                key={index}
-                level={(index + 1) as HeadingLevel}
-              />
-            ))}
+          <div className='w-[120px]'>
+            <HeadingPlugin />
+          </div>
 
           <div className='w-[120px]'>
             <FontFamillyPlugin />

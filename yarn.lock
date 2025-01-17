@@ -2653,6 +2653,11 @@
   resolved "https://registry.yarnpkg.com/@tiptap/extension-document/-/extension-document-2.3.0.tgz#a15e17a48f6d24f317f73a7fff79385a2524f081"
   integrity sha512-WC55SMrtlsNOnHXpzbXDzJOp7eKmZV0rXooKmvCDqoiLO/DKpyQXyF+0UHfcRPmUAi2GWFPaer7+p1H9xzcjXg==
 
+"@tiptap/extension-dropcursor@^2.11.2":
+  version "2.11.2"
+  resolved "https://registry.yarnpkg.com/@tiptap/extension-dropcursor/-/extension-dropcursor-2.11.2.tgz#b0dd8844c425d3d82ab354be7bef650eebd160b6"
+  integrity sha512-HbXC9cMVZUY3kyKwbDtVH452CY1qlyLbIvTaN0+dxkFgcVeQZZtfIxU7DwMmqCDmDnsh0CdDqUgUvcXS2UQTwA==
+
 "@tiptap/extension-dropcursor@^2.3.0":
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/@tiptap/extension-dropcursor/-/extension-dropcursor-2.3.0.tgz#4220434bbf96202d7e4c366f28693fe64c3f7542"
@@ -2731,6 +2736,11 @@
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/@tiptap/extension-paragraph/-/extension-paragraph-2.3.0.tgz#959928b57785f4647d807fffe76e63719f2e53c4"
   integrity sha512-peCpA7DFqkd0cHb+cHv4YHNoMsXG8tKFNJlCHpLmsZWl2hWmpKgKmUrXAUfzjcFSvkZxn0xYc5oWbqUgg+2LzA==
+
+"@tiptap/extension-placeholder@^2.11.2":
+  version "2.11.2"
+  resolved "https://registry.yarnpkg.com/@tiptap/extension-placeholder/-/extension-placeholder-2.11.2.tgz#de68ef4932141d6344b0c75f18916249c387883b"
+  integrity sha512-7rv6nylqX57Q+K+AH794Kg9U7OrLyujhXXqQvd9iZdBP7bTCNUlFu0cGlIyHdM/eWJjoUblZs0VLV2IApk4xjQ==
 
 "@tiptap/extension-strike@^2.3.0":
   version "2.3.0"
@@ -9692,6 +9702,11 @@ tippy.js@^6.3.7:
   dependencies:
     "@popperjs/core" "^2.9.0"
 
+tiptap-extension-auto-joiner@^0.1.3:
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/tiptap-extension-auto-joiner/-/tiptap-extension-auto-joiner-0.1.3.tgz#d9f8ed805f9489d11c5b29e0b5ceed7ebad7063a"
+  integrity sha512-nY3aKeCpVb2WjjVEZkLtEqxsK3KU1zGioyglMhK1sUFNjKDccOfRyz/YDKrHRAVsKJPGnk2A8VA1827iGEAXWQ==
+
 tiptap-extension-font-size@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/tiptap-extension-font-size/-/tiptap-extension-font-size-1.2.0.tgz#dc884e2a8158819cffa4a322107de4c275aca6e0"
@@ -9699,6 +9714,11 @@ tiptap-extension-font-size@^1.2.0:
   dependencies:
     "@tiptap/core" "^2.0.0-beta.116"
     "@tiptap/extension-text-style" "^2.0.0-beta.17"
+
+tiptap-extension-global-drag-handle@^0.1.16:
+  version "0.1.16"
+  resolved "https://registry.yarnpkg.com/tiptap-extension-global-drag-handle/-/tiptap-extension-global-drag-handle-0.1.16.tgz#64889c12dbc79cdb02b2b28535ec648f460ad0a0"
+  integrity sha512-Toke8gAgvgmSTmpU5Zome29ywdcIPxVZVkzI3GpUbaX8DF7o2ukyb+g/x5PAwBWQt/E4nhX91QlClo96psSYHQ==
 
 to-fast-properties@^2.0.0:
   version "2.0.0"
